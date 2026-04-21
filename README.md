@@ -1,1 +1,2464 @@
-a
+
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body{
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 11pt;
+                user-select:  text;
+            }
+
+            footer, a{
+                user-select: none;
+            }
+
+            textarea{
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 11pt;
+            }
+
+            .reloj{
+                font-size: 15px;
+                font-family: 'Segoe UI', sans-serif;
+                margin: 11px 0;
+            }
+
+            .tab-buttons {
+            display: flex;
+            margin-bottom: 10px;
+            }
+
+            .subtab-buttons {
+            display: flex;
+            margin-bottom: 10px;
+            }
+
+            .generated-text{                
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 11pt;
+                user-select: text;
+                border: 1px solid #ccc;
+                padding: 10px;
+                cursor: text;
+            }
+
+            .generated-link a {
+                user-select: text; /* Asegura que los enlaces también puedan seleccionarse */
+                color: blue;
+                text-decoration: underline;            
+            }
+
+            .generated-link a:focus {
+                outline: none;
+            }
+
+            .tab-buttons button {
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            background-color: #eee;
+            cursor: pointer;
+            margin-right: 5px;
+            }
+
+            .subtab-buttons button {
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            background-color: #eee;
+            cursor: pointer;
+            margin-right: 5px;
+            }
+
+            .tab-buttons button.active {
+            background-color: #ddd;
+            font-weight: bold;
+            }
+
+            .subtab-buttons button.active {
+            background-color: #ddd;
+            font-weight: bold;
+            }
+
+            .tab-content {
+            display: none;
+            border: 1px solid #ccc;
+            padding: 15px;
+            }
+
+            .subtab-content {
+            display: none;            
+            padding: 15px;
+            }
+
+            .tab-content.active {
+            display: block;
+            }
+
+            .subtab-content.active {
+            display: block;
+            }
+
+            .texto-copiable {
+                border: 1px solid #ccc;
+                padding: 10px;
+                width: fit-content;
+                user-select: text; /* permite seleccionar el texto */
+            }
+
+        </style>
+        <title>Intune Templates</title>        
+        <link rel="stylesheet" href="style.css">
+        <script>
+            var templatesContent = {};
+            async function GetTemplates(){
+                const url = 'https://raw.githubusercontent.com/RSZ28/Templates_Content/refs/heads/main/Templates_Content.json';
+
+                try{
+                    const rsp = await fetch(url);
+                    if(!rsp.ok) throw new Error('Download Error');
+
+                    const txt = await rsp.text();
+                    txt.replace(//,"\n");
+                    //console.log(txt);
+                    //const temp = "[" + txt.trim().replace(/,\s*$/,"") + "]";                    
+                    const tmpJSON = JSON.parse(txt);
+
+                    tmpJSON.forEach(i => {
+                        templatesContent[i.Columna1] = i.Columna2;
+                    });
+
+                    
+                } catch(error){
+                    console.error('Error: ',error);
+                }
+
+                //console.log(templatesContent);
+            }
+
+            function boldString(str , substr){
+                strRegExp = new RegExp(substr, 'g');
+                return str.replace(strRegExp, '<b>'+substr+'</b>');
+            }
+
+            document.addEventListener("DOMContentLoaded", function() {
+                GetTemplates();
+                SetName();
+                function actualizarRelojes() {
+                let date = new Date();
+                let ahora;
+                const zonas = [
+                    { id: 'pst', zona: 'America/Los_Angeles', nombre: 'Pacific Standard Time (PST)' },
+                    { id: 'ast', zona: 'America/Puerto_Rico', nombre: 'Atlantic Standard Time (AST)' },
+                    { id: 'mst', zona: 'America/Denver', nombre: 'Mountain Standard Time (MST)' },
+                    { id: 'cst', zona: 'America/Chicago', nombre: 'Central Standar Time (CST)' },
+                    { id: 'est', zona: 'America/New_York', nombre: 'Easter Standard Time (EST)' },
+                    { id: 'nic', zona: 'America/Managua', nombre: 'Hora Nicaragua'},
+                    { id: 'chl', zona: 'America/Santiago', nombre:'Hora de Chile'},
+                    { id: 'col', zona: 'America/Bogota', nombre:'Hora de Colombia'},
+                ];
+
+                zonas.forEach(({ id, zona, nombre }) => {
+                    ahora = date.toLocaleTimeString('en-US', {
+                    timeZone: zona,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                    });
+                    document.getElementById(id).textContent = `${nombre}: ${ahora}`;
+                });                
+            }
+            ShowIM();
+            Look4Cases();
+            setInterval(actualizarRelojes, 1000);
+            actualizarRelojes();
+            });
+        </script>
+    </head>    
+    <body>
+        <h1>Intune QA Templates</h1>        
+        <fieldset style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <legend><b>Time Zones</b></legend>
+            <fieldset>
+                <div class="reloj" id="nic"></div>
+                <div class="reloj" id="chl"></div>
+                <div class="reloj" id="col"></div>
+                <div class="reloj" id="ast"></div>
+            </fieldset>
+            <fieldset>
+                <div class="reloj" id="pst"></div>
+                <div class="reloj" id="cst"></div>
+                <div class="reloj" id="est"></div>
+                <div class="reloj" id="mst"></div> 
+            </fieldset>
+        </fieldset>
+        <fieldset style="display: block;">
+            <legend><b>Engineer Alias</b></legend>
+            <div>
+                <legend>Alias: <input id="eAlias" placeholder="Here goes your Alias" onchange="SetDate()"></legend>
+            </div>
+        </fieldset>
+        <!-- <fieldset style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"> -->
+        <fieldset>
+            <fieldset>
+                <legend><b>Case Information</b></legend>
+                <div>
+                    <b style="color: #ff000f;">IT'S SEV A?</b>
+                    <input type="checkbox" id="sevA" onchange="SetSEVAFollowUp()">
+                </div>
+                <div>
+                    Do you know the client's name?
+                    <input type="checkbox" id="nameRes" checked="True" onchange="SetName()">
+                    <script>
+                        function SetSEVAFollowUp(){
+                            const subButtons = document.querySelectorAll('.subtab-btn');
+                            const subContents = document.querySelectorAll('.subtab-content');
+                            const buttons = document.querySelectorAll('.tab-btn');
+                            const contents = document.querySelectorAll('.tab-content');
+                            const sevA = document.getElementById("sevA").checked;
+                            
+                            subButtons.forEach(button => {
+                                button.classList.remove('active');
+                            });
+                            subContents.forEach(cnt => {
+                                cnt.classList.remove('active');
+                            });
+                            buttons.forEach(bnt => {
+                                bnt.classList.remove('active');
+                            });
+                            contents.forEach(cnt => {
+                                cnt.classList.remove('active');
+                            });
+                            
+                            if(sevA === true){
+                                document.getElementById("PCM").style.display = "none";
+                                document.getElementById("tab4BNT").classList.add('active');
+                                document.getElementById("tab4").classList.add('active');
+                                document.getElementById("fA").classList.add('active');
+                                document.getElementById("fAbutton").classList.add('active');
+                            }
+                            else{
+                                document.getElementById("PCM").style.display = "block";
+                                document.getElementById("tab2BNT").classList.add('active');
+                                document.getElementById("tab2").classList.add('active');
+                                document.getElementById("f1").classList.add('active');
+                                document.getElementById("fButton").classList.add('active');
+                            }
+                        }
+
+                        function SetName(){
+                            const check = document.getElementById("nameRes");
+                            const field = document.getElementById("clientNameF");
+                            field.value = check.checked ? "" : "Admin";
+                            field.readOnly = !check.checked ? true : false;
+                        }
+                    </script>
+                </div>
+                <div>
+                    Client's name:
+                    <input type="text" id="clientNameF" placeholder="Here goes the client's name">
+                </div>
+                <div>
+                    Case number: 
+                    <style>
+                        input[type=number]::-webkit-inner-spin-button,
+                        input[type=number]::-webkit-outer-spin-button{
+                            -webkit-appearance: none;
+                            margin: 0;
+                        }
+
+                        input[type=number]{
+                            appearance: textfield;
+                        }
+                    </style>
+                    <input type="number" id="caseNumF" placeholder="Here goes the case number">
+                </div>
+                <div style="display: none;">
+                    Client's Email:
+                    <input type="email" id="clientEmailF" placeholder="Here goes the client's email">
+                </div>
+                <div style="display: none;">
+                    Client's Phone Number:
+                    <input type="text" id="clientPhoneF" placeholder="Here goes the client's phone">
+                </div>
+                <legend>Case Languange:</legend>
+                <div>
+                    <input type="radio" id="eng" name="language" value="eng" checked="True">
+                    <label for="eng">English</label>
+                    <input type="radio" id="esp" name="language" value="esp">
+                    <label for="esp">Spanish</label>
+                </div>
+                <div id="PCM">
+                    <legend>Case PCM:</legend>
+                    <div>
+                        <input type="radio" id="email" name="pcm" value="email" checked="true" onclick="ShowPHTypes()">
+                        <label for="email">Email</label>
+                        <input type="radio" id="phone" name="pcm" value="phone" onclick="ShowPHTypes()">
+                        <label for="phone">Phone</label>
+                    </div>
+                </div>
+                <button onclick="ClearFields()">Clear Fields</button>
+                <script>
+                    const slaLanguage = document.querySelectorAll('input[name="language"]');
+                    const cKName = document.getElementById("nameRes");
+                    const cName = document.getElementById("clientNameF");
+                    const cNumber = document.getElementById("caseNumF");
+                    const cEmail = document.getElementById("clientEmailF");
+                    const cPhone = document.getElementById("clientPhoneF");
+
+                    function ClearFields(){
+                        cNumber.value = "";
+                        cEmail.value = "";
+                        cPhone.value = "";
+                        if(cKName.checked === true) {
+                            cName.value = "";
+                        }
+                        //slaLanguage.forEach(r => r.checked = false);
+                    }
+                </script>
+            </fieldset>
+            <fieldset style="display: none;">
+                <legend><b>Stored Cases</b></legend>
+                <div id="storedC">
+
+                </div>
+                <script>
+                    function ClearButtonsPane(){
+                        const casesPane = document.getElementById("storedC");
+
+                        casesPane.childNodes.forEach(function (c) {
+                            casesPane.removeChild(c)
+                        });
+
+                    }
+
+                    function Look4Cases(){
+                        const allKeys = Object.keys(localStorage);
+                        const casesPane = document.getElementById("storedC");
+
+                        ClearButtonsPane();
+
+                        if(allKeys.length > 0){
+                            for(let i=0; i<allKeys.length;i++){
+                                let C = JSON.parse(localStorage.getItem(allKeys[i]));
+                                let btn = document.createElement("button");
+                                btn.name = C.cNumber;
+                                btn.textContent = "Case: "+C.cNumber;
+                                
+                                btn.onclick = function () {GetCase(btn);};
+                                casesPane.appendChild(btn);
+                            }
+                        }
+                    }
+                </script>
+            </fieldset>
+        </fieldset>
+
+        <div class="tab-buttons">
+            <button class="tab-btn" data-tab="tab1" style="display: block;">Master Note</button>
+            <button class="tab-btn active" id="tab2BNT" data-tab="tab2">SLA</button>
+            <button class="tab-btn" data-tab="tab3">Premier SLA</button>
+            <button class="tab-btn" id="tab4BNT" data-tab="tab4">Follow Up</button>
+            <button class="tab-btn" data-tab="tab5">Closure</button>
+            <button class="tab-btn" data-tab="tab6">SAW Request</button>
+            <button class="tab-btn" data-tab="tab7">22 Days Note</button>
+            <button class="tab-btn" data-tab="tab8">IET</button>
+        </div>
+
+        <!--Master Note-->
+        <div id="tab1" class="tab-content">
+            <fieldset>
+                <legend>Case Missing Information</legend>                
+                <div>
+                    <legend>Is SAW Request? <input type="checkbox" id="SAW" onchange="HideDeviceInfo()"></legend>
+                </div>
+
+                <div>
+                    <legend>Customer Type:</legend>
+                    <input type="radio" id="prem" name="cType" value="Premier" onchange="ShowIM()">
+                    <label for="prem">Premier</label>
+                    <input type="radio" id="part" name="cType" value="Partner" onchange="ShowIM()">
+                    <label for="part">Partner</label>
+                    <input type="radio" id="pro" name="cType" value="Pro" checked="True" onchange="ShowIM()" onload="ShowIM()">
+                    <label for="pro">Pro</label>
+                </div>
+            
+                <div id="imInfo">
+                    <legend>IM Name: <input type="text" id="imName" placeholder="Here goes the IM Name"></legend>
+                    <legend>IM Contact: <input type="text" id="imCont" placeholder="Here goes the IM contact"></legend>
+                </div>
+
+                <div>
+                    <legend>Country: <input type="text" id="country" placeholder="Customer Country"></legend>
+                    <legend>Time Zone: <input type="text" id="TZ" placeholder="Customer Time Zone"></legend>
+                </div>
+                <script>
+                    function HideDeviceInfo(){
+                        let SAW = document.getElementById("SAW").checked;
+                        if(SAW === true){
+                            document.getElementById("deviceInfo").style.display = "none";
+                            document.getElementById("policyInfo").style.display = "none";
+                        }
+                        else{
+                            document.getElementById("deviceInfo").style.display = "block";
+                            document.getElementById("policyInfo").style.display = "block";
+                        }
+                    }
+
+                    function ShowIM()
+                    {
+                        const res = document.querySelector('input[name="cType"]:checked').value;
+
+                        if(res === "Pro"){
+                            document.getElementById("imInfo").style.display = "none";
+                            document.getElementById("imName").value = "N/A";
+                            document.getElementById("imCont").value = "N/A";
+                        }
+                        else{
+                            document.getElementById("imInfo").style.display = "block";
+                            document.getElementById("imName").value = "";
+                            document.getElementById("imCont").value = "";
+                        }
+                    }
+                </script>
+            </fieldset>
+            <fieldset>
+                <legend>Objective</legend>
+                <div>
+                    <legend>Tenant ID: <input type="text" id="tID" placeholder="Here goes the Tenant ID"></legend>
+                    <legend>MDM Authority: <input type="text" id="mdm" placeholder="Here goes the MDM Authority"></legend>
+                    <legend>ASU: <input type="text" id="asu" placeholder="Here goes the ASU"></legend>
+                    <legend>Environment: <input type="text" id="env" placeholder="Here goes the case Environment"></legend>
+                    <legend>Date Issue Started: <input type="text" id="issueS" placeholder="Here goes when issue started"></legend>
+                    <legend>Customer repro only? <input type="checkbox" id="reproOnly"></legend>
+                    <legend>Are you able to reproduce the same problem in your tenant? <input type="checkbox" id="intRepro"></legend>
+                    <div id="steps">
+                        <legend>Repro Steps:</legend>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset id="deviceInfo">
+                <legend>Info for Intune Cases</legend>
+                <div>
+                    <legend><b>User Info:</b></legend>
+                    <div>
+                        <legend>UPN: <input type="text" id="upn" placeholder="Here goes the User UPN"></legend>
+                        <legend>User ID: <input type="text" id="uID" placeholder="Here goes the User ID"></legend>
+                    </div>
+                </div>
+                <div>
+                    <legend><b>Device Info:</b></legend>
+                    <div>
+                        <legend>Intune Device ID: <input type="text" id="deviceID" placeholder="Here goes the Intune Device ID"></legend>
+                        <legend>Device Name: <input type="text" id="deviceName" placeholder="Here goes the Device Name"></legend>
+                        <legend>Serial Number: <input type="text" id="serialNum" placeholder="Here goes the Serial Number"></legend>
+                        <legend>Device Platform: <select id="OS">
+                            <option value="Windows">Windows</option>
+                            <option value="Android">Android</option>
+                            <option value="iOS/iPadOS">iOS/iPadOS</option>
+                            <option value="MacOS">MacOS</option>
+                            <option value="Linux">Linux</option>
+                        </select></legend>
+                        <legend>OS Version & Build: <input type="text" id="OSversion" placeholder="Here goes the OS Version and Build"></legend>
+                        <legend>Enrollment Method Used: <input type="text" id="enrMethod" placeholder="Here goes the enrollment method"></legend>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset id="policyInfo">
+                <legend>Should be collected if related to Issue</legend>
+                <div>
+                    <legend>Policy/Profile Name: <input type="text" id="policyName" placeholder="Here goes the policy or profile name"></legend>
+                    <legend>Policy ID: <input type="text" id="policyID" placeholder="Here goes the policy ID"></legend>
+                    <legend>Policy Type: <input type="text" id="policyType" placeholder="Here goes the policy type"></legend>
+                    <legend>Affected Settings: </legend>
+                </div>
+
+                <div>
+                    <legend>Assigend to: <select id="assignment">
+                        <option value="Devices">Devices</option>
+                        <option value="Users">Users</option>
+                    </select></legend>
+                    <legend>App Name: <input type="text" id="appName" placeholder="Here goes the App name"></legend>
+                    <legend>App ID: <input type="text" id="appID" placeholder="Here goes the App ID"></legend>                    
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Completed Actions Taken and Results</legend>
+                <div id="newAction" style="display: none;">
+                    <div id="date"></div>
+                    <div id="notes" style="display: block;">
+                        <fieldset contenteditable="true" id="dayResum" style="
+                            width: 400pt;
+                            height: 150pt;
+                            text-align: left;
+                            vertical-align: top;
+                            padding: 0.5em;
+                            overflow: auto;
+                            word-wrap: break-word;
+                            white-space: pre-wrap;"
+                            rows="5" cols="30"></fieldset>
+                    </div>
+                    <button onclick="MasterNote()">Save Master Note</button>
+                </div>
+                <script>
+                    function SetDate(){
+                        let alias = document.getElementById("eAlias").value;
+                        if(alias.includes("@microsoft.com")){
+                            const date = new Date();
+                            document.getElementById("date").innerHTML = date.toLocaleDateString('en-US', {
+                                month:'2-digit',
+                                day: '2-digit'
+                            })+" - " + "<b>"+alias+"</b>";
+                            //document.getElementById("notes").style.display = "block";
+                            //document.getElementById("date").style.display = "block";
+                            document.getElementById("newAction").style.display = "block";
+                        }
+                        else{
+                            //document.getElementById("notes").style.display = "none";
+                            document.getElementById("newAction").style.display = "none";
+                            //document.getElementById("date").style.display = "none";
+                        }
+                    }
+                </script>
+            </fieldset>
+
+            <fieldset>
+                <legend>Master Note</legend>
+            </fieldset>
+
+            <script>
+                function MasterNote(){
+                    let ms = {
+                        cName: cName.value,
+                        cNumber: cNumber.value,
+                        cEmail: cEmail.value,
+                        cPhone: cPhone.value,
+                        cLanguage: slaLanguage.value
+                    }                    
+
+                    let stCase = localStorage.getItem(ms.cNumber);
+                    if(stCase !== null){
+                        let stored = JSON.parse(localStorage.getItem(ms.cNumber));
+                        Object.keys(ms).forEach(function (k){
+                            stored[k] = ms[k];
+                        });
+
+                        localStorage.setItem(ms.cNumber, JSON.stringify(stored));
+                    }
+                    else{
+                        localStorage.setItem(ms.cNumber, JSON.stringify(ms));
+                    }
+
+                    Look4Cases();
+                }
+                function GetCase(button){                    
+                    let data = JSON.parse(localStorage.getItem(button.name));
+                    cName.value = data.cName;
+                    cNumber.value = data.cNumber;
+                    cEmail.value = data.cEmail;
+                    cPhone.value = data.cPhone;
+                    //slaLanguage = data.slaLanguage;
+                    
+                }
+            </script>
+        </div>
+
+        <!--SLA-->
+        <div id="tab2" class="tab-content active">
+            <fieldset>
+                <legend>Business Hours to Contact:</legend>                
+                <select id="bHours">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                </select>
+            </fieldset>
+            <fieldset>
+                <legend>SLA Expiration</legend>
+                <div>
+                    <input type="radio" id="onTime" name="expiration" value="ontime" onchange="ShowParams()">
+                    <label for="onTime">On Time</label>
+                    <label><input type="radio" id="expired" name="expiration" value="expired" onchange="ShowParams()">Expired</label>
+                    <script>
+                        function ShowParams(){
+                            const res = document.querySelector('input[name="expiration"]:checked').value;
+                            if(res === "expired"){
+                                document.getElementById("expiredSection").style.display = "block";
+                            }
+                            else{
+                                document.getElementById("expiredSection").style.display = "none";
+                            }
+                        }
+                    </script>
+                </div>
+                <div id="expiredSection" style="display: none;">
+                    <fieldset>
+                        <legend>Expired SLA Extra Info</legend>
+                        Client's Issue:
+                        <input type="text" id="issue"><br>
+                        <div id="qSection">
+
+                        </div>
+                        <script>
+                            let questionI = 0;
+                            function AddField(){                            
+                                let newQuestion = document.createElement("input");
+                                newQuestion.type = "text";
+                                newQuestion.placeholder = questionI;
+                                newQuestion.style.boxSizing.length = "10px";
+                                document.getElementById("qSection").appendChild(newQuestion);
+                                document.getElementById("qSection").appendChild(document.createElement("br"));
+                                questionI++;
+                            }
+                        </script>
+                    </fieldset>
+                </div>
+            </fieldset>
+            <button id="generate" onclick="Generate()">Generate</button>            
+            <script>
+                function Generate(){
+                    template = "Hola Mundo";           
+                    const slaType = document.querySelector('input[name="pcm"]:checked').value;
+                    const slaExpiration = document.querySelector('input[name="expiration"]:checked').value;
+                    const slaLanguage = document.querySelector('input[name="language"]:checked').value;
+                    const cKName = document.getElementById("nameRes").value;
+                    const cName = document.getElementById("clientNameF").value;
+                    const cNumber = document.getElementById("caseNumF").value;
+                    const cEmail = document.getElementById("clientEmailF").value;
+                    //const cEmail = `<a href="mailto:${Email}">${Email}</a>`;
+                    const cPhone = document.getElementById("clientPhoneF").value;
+                    const bHours = document.getElementById("bHours").value;
+                    const cIssue = document.getElementById("issue").value;
+                    
+
+                    if(slaExpiration === "ontime"){
+                        if(slaLanguage === "eng"){
+                            if(slaType === "email"){
+                                /*if(bHours > 1){
+                                    template = "Dear "+cName+",\n\n"+
+                                    "Thank you very much for contacting Microsoft Customer Support!\n\n"+
+                                    "We have received this service request under the number <b>"+cNumber+"</b>. While we review the details provided in the case description, please remember that you can add additional information by replying to this email.\n\n"+
+                                    "Your incident is our priority, and we are committed to providing you with a resolution as quickly as possible. We will be contacting you at the email address <b>"+cEmail+"</b> registered in our system within an average of "+bHours+" business hours.\n\n"+
+                                    "Alternatively, if you agree, I would be happy to arrange a call to discuss this request in detail. Please let me know your availability, and I will do my best to adjust my schedule to yours. Also, confirm if I can call you at the number registered in this ticket <b>"+cPhone+"</b>.\n\n"+
+                                    "Thank you for choosing Microsoft!\n\n";
+                                }
+                                else{
+                                    template = "Dear "+cName+",\n\n"+
+                                    "Thank you very much for contacting Microsoft Customer Support!\n\n"+
+                                    "We have received this service request under the number <b>"+cNumber+"</b>. While we review the details provided in the case description, please remember that you can add additional information by replying to this email.\n\n"+
+                                    "Your incident is our priority, and we are committed to providing you with a resolution as quickly as possible. We will be contacting you at the email address <b>"+cEmail+"</b> registered in our system within an average of "+bHours+" business hour.\n\n"+
+                                    "Alternatively, if you agree, I would be happy to arrange a call to discuss this request in detail. Please let me know your availability, and I will do my best to adjust my schedule to yours. Also, confirm if I can call you at the number registered in this ticket <b>"+cPhone+"</b>.\n\n"+
+                                    "Thank you for choosing Microsoft!\n\n";
+                                }*/
+                               template = templatesContent["BC_SLA_OT_EM_ENG"];
+                            }
+                            else if(slaType === "phone"){
+                                /*
+                                if(bHours > 1){
+                                    template = "Dear "+cName+",\n\n"+
+                                    "Thank you very much for contacting Microsoft customer Support!\n\n"+
+                                    "We have received this service request under the number <b>"+cNumber+"</b>. While we review the details provided in the case description, please remember that you can add additional information by replying to this email.\n\n"+
+                                    "Your incident is our priority, and we are committed to providing you with a resolution as quickly as possible. We will be contacting you at the phone number <b>"+cPhone+"</b>, registered in our system, within an average of "+ bHours +" business hours.\n\n"+
+                                    "If you prefer that we contact you at a different number, please let us know your preferred contact phone number. Additionally, if there is a specific time that is more convenient for you to receive our call, please let us know, and we will do our best to accommodate your availability. We appreciate your patience.\n\n"+
+                                    "Thank you for choosing Microsoft!\n\n";
+                                }
+                                else{
+                                    template = "Dear "+cName+",\n\n"+
+                                    "Thank you very much for contacting Microsoft customer Support!\n\n"+
+                                    "We have received this service request under the number <b>"+cNumber+"</b>. While we review the details provided in the case description, please remember that you can add additional information by replying to this email.\n\n"+
+                                    "Your incident is our priority, and we are committed to providing you with a resolution as quickly as possible. We will be contacting you at the phone number <b>"+cPhone+"</b>, registered in our system, within an average of "+ bHours +" business hour.\n\n"+
+                                    "If you prefer that we contact you at a different number, please let us know your preferred contact phone number. Additionally, if there is a specific time that is more convenient for you to receive our call, please let us know, and we will do our best to accommodate your availability. We appreciate your patience.\n\n"+
+                                    "Thank you for choosing Microsoft!\n\n";
+                                }*/
+                               template = templatesContent["BC_SLA_OT_PH_ENG"];
+                            }
+                        }
+                        else if(slaLanguage === "esp"){
+                            if(slaType === "email"){
+                                /*
+                                if(bHours > 1){
+                                    template = "Estimado "+cName+", \n\n"+
+                                    "¡Muchas gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                    "Hemos recibido esta solicitud de servicio bajo el número <b>"+cNumber+"</b>. "+
+                                    " Mientras revisamos los detalles proporcionados en la descripción del caso, recuerda que puedes agregar información adicional respondiendo a este correo electrónico.\n\n"+
+                                    "Tu incidente es nuestra prioridad y estamos comprometidos a brindarte una resolución en la mayor brevedad posible. Te estaremos contactando a la dirección de correo electrónico <b>"+cEmail+"</b> "+
+                                    "registrado en nuestro sistema en un tiempo promedio de "+ bHours +" horas laborales.\n\n"+
+                                    "Alternativamente, si estás de acuerdo, estaría encantado de organizar una llamada para discutir esta solicitud en detalle. Por favor, déjame saber tu disponibilidad y haré lo posible por ajustar mi horario al tuyo. También confirma si puedo llamarte al número registrado en este ticket <b>"+cPhone+"</b>.\n\n"+
+                                    "¡Gracias por elegir Microsoft!\n\n";
+                                }
+                                else{
+                                    template = "Estimado "+cName+", \n\n"+
+                                    "¡Muchas gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                    "Hemos recibido esta solicitud de servicio bajo el número <b>"+cNumber+"</b>. "+
+                                    " Mientras revisamos los detalles proporcionados en la descripción del caso, recuerda que puedes agregar información adicional respondiendo a este correo electrónico.\n\n"+
+                                    "Tu incidente es nuestra prioridad y estamos comprometidos a brindarte una resolución en la mayor brevedad posible. Te estaremos contactando a la dirección de correo electrónico <b>"+cEmail+"</b> "+
+                                    "registrado en nuestro sistema en un tiempo promedio de "+ bHours +" hora laboral.\n\n"+
+                                    "Alternativamente, si estás de acuerdo, estaría encantado de organizar una llamada para discutir esta solicitud en detalle. Por favor, déjame saber tu disponibilidad y haré lo posible por ajustar mi horario al tuyo. También confirma si puedo llamarte al número registrado en este ticket <b>"+cPhone+"</b>.\n\n"+
+                                    "¡Gracias por elegir Microsoft!\n\n";
+                                }*/
+                               template = templatesContent["BC_SLA_OT_EM_ESP"];
+                            }
+                            else if(slaType === "phone"){
+                                /*
+                                if(bHours > 1){
+                                    template = "Estimado "+cName+", \n\n"+
+                                    "¡Muchas gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                    "Hemos recibido esta solicitud de servicio bajo el número <b>"+cNumber+"</b>. Mientras revisamos los detalles proporcionados en la descripción del caso, recuerda que puedes agregar información adicional contestando este correo.\n\n"+
+                                    "Tu incidente es nuestra prioridad y estamos comprometidos a brindarte una resolución en la mayor brevedad posible, Te estaremos contactando al número telefónico <b>"+cPhone+"</b>, registrado en nuestro sistema en un tiempo promedio de "+bHours+" horas laborales.\n\n"+
+                                    "Si prefieres que nos comuniquemos a un número distinto, por favor indícanos tu teléfono de contacto preferido. Asimismo, si hay una hora especifica en la que te resulte más conveniente recibir nuestra llamada, háznoslo saber y haremos lo posible para adaptarnos a tu disponibilidad. Agradecemos tu paciencia.\n\n"+
+                                    "¡Gracias por elegir Microsoft!\n\n";
+                                }
+                                else{
+                                    template = "Estimado "+cName+", \n\n"+
+                                    "¡Muchas gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                    "Hemos recibido esta solicitud de servicio bajo el número <b>"+cNumber+"</b>. Mientras revisamos los detalles proporcionados en la descripción del caso, recuerda que puedes agregar información adicional contestando este correo.\n\n"+
+                                    "Tu incidente es nuestra prioridad y estamos comprometidos a brindarte una resolución en la mayor brevedad posible, Te estaremos contactando al número telefónico <b>"+cPhone+"</b>, registrado en nuestro sistema en un tiempo promedio de "+bHours+" hora laboral.\n\n"+
+                                    "Si prefieres que nos comuniquemos a un número distinto, por favor indícanos tu teléfono de contacto preferido. Asimismo, si hay una hora especifica en la que te resulte más conveniente recibir nuestra llamada, háznoslo saber y haremos lo posible para adaptarnos a tu disponibilidad. Agradecemos tu paciencia.\n\n"+
+                                    "¡Gracias por elegir Microsoft!\n\n";
+                                }
+                                */
+                               template = templatesContent["BC_SLA_OT_PH_ESP"];
+                            }
+                        }
+                    }
+                    else if(slaExpiration === "expired"){
+                        if(slaLanguage === "eng"){
+                            if(slaType === "email"){
+                                /*template = "Dear "+cName+",\n\n"+
+                                "Thank you for contacting Microsoft Customer Support!\n\n"+
+                                "I am writing to inform you that we are handling your request under case number <b>"+cNumber+"</b>. Your incident is our priority, and we are committed to providing you with a resolution as soon as possible.\n\n"+
+                                "We would appreciate it if you could provide us with more information about the issue you are experiencing, which I understand is related to <b>"+cIssue+"</b>.\n\n"+
+                                "To properly address your request, could you kindly share the following information:\n"+
+                                "<ol>"+
+                                "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                                "</ol>\n"+
+                                "Alternatively, if you agree, I would be happy to arrange a call to discuss this request in detail. Please let me know your availability, and I will do my best to adjust my schedule to yours. Also, confirm if I can call you at the number registered in this ticket <b>"+cPhone+"</b>.\n\n"+
+                                "We are here to help you, so please do not hesitate to write to us if you have any questions or need more information about your ticket.\n\n"+
+                                "Thank you for your patience and cooperation!\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_EM_ENG"];
+                            }
+                            else if(slaType === "phone"){
+                                /*template = "Dear "+cName+",\n\n"+
+                                "Thank you for contacting Microsoft Customer Support!\n\n"+
+                                "I am writing to inform you that we are handling your request under case number <b>"+cNumber+"</b>. We want to ensure your experience is as smooth as possible, so I would appreciate it if you could consider the following:\n"+
+                                "<ul>"+
+                                "<li>Could you please provide us with your working hours and best availability for contact? This will help us better coordinate our communication.</li>"+
+                                "<li>We would appreciate it if you could provide more information about the issue you are experiencing, which I understand is related to <b>"+cIssue+"</b>.</li>"+
+                                "</ul>\n"+
+                                "Additionally, we will be contacting you on the phone number <b>"+cPhone+"</b> we have on record. If you prefer us to contact you at a different number, please let us know.\n\n"+
+                                "We are here to help, so feel free to write to us if you have any questions or need more information about your ticket.\n\n"+
+                                "Thank you for your patience and cooperation!\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_PH_ENG"];
+                            }
+                        }
+                        else if(slaLanguage === "esp"){
+                            if(slaType === "email"){
+                                /*template = "Estimado "+cName+",\n\n"+
+                                "¡Gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                "Te escribo para informarte que estamos atendiendo tu solicitud bajo el número de caso <b>"+cNumber+"</b>. Tu incidente es nuestra prioridad y estamos comprometidos a brindarte una resolución en la mayor brevedad posible.\n\n"+
+                                "Agradeceríamos si pudieras proporcionarnos más información sobre el problema que estás experimentando, que entiendo está relacionado con <b>"+cIssue+"</b>. Para atender adecuadamente su solicitud, sería tan amable de compartir la siguiente información:\n"+
+                                "<ol>"+
+                                "<li><b>AQUI VAN TUS SCOPING QUESTIONS</b></li>"+
+                                "</ol>\n"+
+                                "Alternativamente, si estás de acuerdo, estaría encantado de organizar una llamada para discutir esta solicitud en detalle. Por favor, déjame saber tu disponibilidad y haré lo posible por ajustar mi horario al tuyo. También confirma si puedo llamarte al número registrado en este ticket <b>"+cPhone+"</b>.\n\n"+
+                                "Estamos aquí para ayudarte, así que no dudes en escribirnos si tienes alguna pregunta o necesitas más información sobre tu ticket.\n\n"+
+                                "¡Gracias por tu paciencia y colaboración!\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_EM_ESP"];
+                            }
+                            else if(slaType === "phone"){
+                                /*template = "Estimado "+cName+",\n\n"+
+                                "¡Gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                "Te escribo para informarte que estamos atendiendo tu solicitud bajo el número de caso <b>"+cNumber+"</b>. Queremos asegurarnos de que tu experiencia sea lo más fluida posible, por lo que te agradecería que consideraras lo siguiente:\n"+
+                                "<ul>"+
+                                "<li>¿Podría Indicarnos su horario laboral, así como mejor disponibilidad para ser contactado? Esto nos ayudará a coordinar mejor nuestra comunicación.</li>"+
+                                "<li>Agradeceríamos si pudieras proporcionarnos más información sobre el problema que estás experimentando, que entiendo está relacionado con <b>"+cIssue+"</b>.</li>"+
+                                "</ul>\n"+
+                                "Además, te estaremos contactando al número telefónico <b>"+cPhone+"</b> que tenemos registrado. Si prefieres que nos comuniquemos a un número diferente, por favor háznoslo saber.\n\n"+
+                                "Estamos aquí para ayudarte, así que no dudes en escribirnos si tienes alguna pregunta o necesitas más información sobre tu ticket.\n\n"+
+                                "¡Gracias por tu paciencia y colaboración!\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_PH_ESP"];
+                            }
+                        }
+                    }
+                    
+                    if(template.includes("NAME")) template = template.replace("NAME",cName);
+                    //if(template.includes("CALL")) template = template.replace("CALL","<b>" + callTime +" UTC-6</b>");
+                    if(template.includes("EM")) template = template.replace("EM", "<b>"+cEmail+"</b>");
+                    if(template.includes("BHOURS")) template = template.replace("BHOURS", "<b>"+bHours+"</b>");
+                    if(template.includes("PH")) template = template = template.replace("PH","<b>" + cPhone +"</b>");
+                    if(template.includes("TICKET")) template = template.replace("TICKET","<b>" + cNumber + "</b>");
+                    //if(template.includes("DESC")) template = template.replace("DESC", "<b>" + cDes + "</b>");
+                    
+                    document.getElementById("result").innerHTML = template.replace(/\n/g,"<br>");
+                }
+            </script>
+            <fieldset id="generation">
+                <legend>Generated Template</legend>
+                <div id="result" contenteditable="false" style="border: 1px solid #ccc; padding: 10px;"></div>
+            </fieldset>
+        </div>
+
+        <!--Premier SLA-->
+        <div id="tab3" class="tab-content">
+            
+
+            <fieldset>
+                <div>
+                    Its an Aged Case?
+                    <input type="checkbox" id="aged" onclick="ShowPHTypes()">
+                </div>
+            </fieldset>
+            
+            <script>
+                function ShowPHTypes(){
+                    const slaType = document.querySelector('input[name="pcm"]:checked').value;
+                    const aged = document.getElementById("aged").checked;
+                    if(aged === false){
+                        document.getElementById("eN").style.display = "none";
+                        if(slaType === "email"){
+                            document.getElementById("PH").style.display = "none";
+                        }
+                        if(slaType === "phone"){
+                            document.getElementById("PH").style.display = "block";
+                        }
+                    }
+                    else{
+                        document.getElementById("PH").style.display = "none";
+                        document.getElementById("eN").style.display = "block";
+                    }
+                    console.log(aged);
+                }
+            </script>
+
+            <fieldset id="PH" style="display: none;">
+                <legend>SLA Type</legend>
+                <div>
+                    <input type="radio" name="phType" id="ph0" value="ph0" checked="true">
+                    <label for="ph0">Answered Call</label>
+                    <input type="radio" name="phType" id="ph1" value="ph1">
+                    <label for="ph1">Long Call</label>
+                    <input type="radio" name="phType" id="ph2" value="ph2">
+                    <label for="ph2">Call not responded</label>
+                </div>
+            </fieldset>
+            
+            <fieldset id="eN" style="display: none;">
+                <legend>Extra Details</legend>
+                <div>
+                    Engineer name:
+                    <input type="text" id="eName">
+                </div>
+            </fieldset>
+
+            <fieldset style="display: none">
+                <legend>Files Upload Link:</legend>
+                <input type="text" id="cAtt" placeholder="Here goes the case attatchements upload link" style="height: 25px; width: 400px;">
+            </fieldset>
+            
+            <fieldset>
+                <legend>Case Parafrasing:</legend>
+                <input type="text" id="cDes" placeholder="Here goes a brief parafrasing" style="height: 25px; width: 400px;">
+            </fieldset>
+            <div>
+                <button id="premSLA" onclick="GeneratePremSLA()">Generate Prem SLA</button>
+            </div>           
+
+            <script>
+                function GeneratePremSLA(){
+                    const slaType = document.querySelector('input[name="pcm"]:checked').value;
+                    const phType = document.querySelector('input[name="phType"]:checked').value;
+                    const slaLanguage = document.querySelector('input[name="language"]:checked').value;
+                    const aged = document.getElementById("aged").checked;
+                    const eName = document.getElementById("eName").value;
+                    const cKName = document.getElementById("nameRes").value;
+                    const cName = document.getElementById("clientNameF").value;
+                    const cNumber = document.getElementById("caseNumF").value;
+                    const cEmail = document.getElementById("clientEmailF").value;
+                    const cPhone = document.getElementById("clientPhoneF").value;
+                    const cDesc = document.getElementById("cDes").value;
+                    const Att = document.getElementById("cAtt").value;
+                    let cAtt;
+                    let template = "";
+
+                    if(Att !== ""){
+                        cAtt = `<a href="${Att}" class=".enlace-copiable">File Transfer - Case ${cNumber}</a>`;
+                    }
+                    else{
+                        cAtt = "<b>REMEMBER ADD ATTACHMENTS LINK</b>";
+                    }
+
+                    if(slaLanguage === "eng"){
+                        if(slaType === "email"){
+                            if(aged === true){
+                                /*template = "Hello "+cName+",\n\n"+
+                                "Thank you for contacting Microsoft Customer Support!\n\n"+
+                                "My name is "+eName+" from Microsoft Support. I’m reaching out regarding the case <b>#"+cNumber+"</b> about "+cDesc+" so we can agree on the next best step together. We acknowledge that this message is arriving later than you would reasonably expect, and I apologize for the delay. I appreciate your patience while it was pending, but now that you are with me, I’ve placed it at the top of my work for today so we can move it forward without further delay. Rest assured that you are in good hands.\n\n"+
+                                "When you have a moment, could you let me know whether the issue is still ongoing or if things have stabilized on your side?\n\n"+
+                                "If continuing by email works best, these details will help us move quickly:\n\n"
+                                "<ol>"+
+                                "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                                "</ol>\n"+
+                                "I would be happy to arrange a call if you prefer to discuss this request in detail. Please let me know your availability, and I will do my best to adjust my schedule to yours. Also, confirm if I can call you to the number, <b>"+cPhone+"</b>, registered on this ticket.\n\n"+
+                                "We are here to help you, so please do not hesitate to contact us if you have any questions or need more information about your ticket.\n\n"+
+                                "We look forward to hearing back from you at your earliest convenience!\n\n"+
+                                "Kind regards,\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_EM_ENG"];
+                            }
+                            else{
+                                /*template = "Dear "+cName+",\n\n"+
+                                "Thank you for contacting Microsoft Customer Support!\n\n"+
+                                "We have received your service request under the number <b>"+cNumber+"</b>.While we review the details provided in the case description, please remember that you can add additional information by replying directly to this email.\n\n"+
+                                "Your incident is a priority for us, and we are committed to providing you with a solution as soon as possible. We will be contacting you through the email address <b>"+cEmail+"</b> registered in our system.\n\n"+
+                                "We understand that you are facing a situation related to "+cDesc+". To better understand the case, we would appreciate it if you could answer the following questions:\n\n"+
+                                "<ol>"+
+                                "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                                "</ol>\n"+
+                                "Alternatively, if you agree, I would be happy to coordinate a call to discuss this request in detail. Please let me know your availability and I will do my best to accommodate your schedule. I would also appreciate it if you could confirm whether I can contact you at the number registered on this ticket: <b>"+cPhone+"</b>.\n\n"+
+                                "Thank you for choosing Microsoft. We are here to help you.\n\n"+
+                                "Sincerely,\n\n";*/
+                                template = templatesContent["PREM_SLA_OT_EM_ENG"];
+                            }                            
+                        }
+                        else if(slaType === "phone"){
+                            if(aged === true){
+                                /*template = "Hello "+cName+",\n\n"+
+                                "Thank you for contacting Microsoft Customer Support!\n\n"+
+                                "My name is "+eName+" from Microsoft Support. I’m reaching out regarding the case <b>#"+cNumber+"</b> about "+cDesc+" so we can agree on the next best step together. We acknowledge that this message is arriving later than you would reasonably expect, and I apologize for the delay. I appreciate your patience while it was pending, but now that you are with me, I’ve placed it at the top of my work for today so we can move it forward without further delay. Rest assured that you are in good hands.\n\n"+
+                                "Do you have a preferred time to be contacted and a preferred number? If there’s no preference, I will attempt a call shortly to this number <b>"+cPhone+"</b> listed on the case. If you would like me to use a different number, please reply with it.\n\n"+
+                                "We look forward to hearing back from you at your earliest convenience!\n\n"+
+                                "Best regards,\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_PH_ENG"];
+                            }
+                            else{
+                                if(phType === "ph0"){
+                                    /*template = "Dear "+cName+",\n\n"+
+                                    "Thank you for contacting Microsoft Customer Support.\n\n"+
+                                    "I appreciate the time you took to speak with me today related to your service request under the case number <b>"+cNumber+"</b>.\n\n"+
+                                    "We understand that you are experiencing an issue related to "+cDesc+".\n\n"+
+                                    "Below is a summary of our conversation:\n\n"+
+                                    "<b>HERE GOES YOUR CALL SUMMARY</b>\n\n"+
+                                    "Your case is important to us, and we are committed to resolving it as quickly as possible. We will continue to reach out to you at the phone number <b>"+cPhone+"</b> registered in our system.\n\n"+
+                                    "We look forward to continuing to work with you on this matter. If you have any further questions or concerns, please don’t hesitate to contact us.\n\n"+
+                                    "Thank you for choosing Microsoft. We’re here to help.\n\n"+
+                                    "Sincerely,\n\n";*/
+                                    template = templatesContent["PREM_SLA_OT_PH_ANW_ENG"];
+                                }
+                                else if(phType === "ph1"){
+                                    /*template = "Dear "+cName+",\n\n"+
+                                    "Thank you for contacting Microsoft Customer Support!\n\n"+
+                                    "I truly appreciate the time you're dedicating to this call, it's a pleasure to support you. I’d like to inform you that once our conversation concludes, I will be sending you a summary of our discussion along with the action plan we agree upon.\n\n"+
+                                    "This matter pertains to your request regarding "+cDesc+", linked to case number <b>"+cNumber+"</b>, which we will be handling according to our agreement.\n\n"+
+                                    "Thank you for choosing Microsoft. We’re here to help.\n\n"+
+                                    "Sincerely,\n\n";*/
+                                    template = templatesContent["PREM_SLA_OT_PH_LC_ENG"];
+                                }
+                                else if(phType === "ph2"){
+                                    /*template = "Dear "+cName+",\n\n"+
+                                    "Thank you for contacting Microsoft Customer Support.\n\n"+
+                                    "We have received your service request under the case number <b>"+cNumber+"</b>. While we review the details provided in your case description, please feel free to share any additional information by replying directly to this email.\n\n"+
+                                    "Your issue is important to us, and we are committed to providing a resolution as quickly as possible. We attempted to reach you at the phone number listed in our system <b>"+cPhone+"</b>, but were unable to make contact.\n\n"+
+                                    "We understand that you are experiencing an issue related to "+cDesc+". To help us better understand and address your concern, we kindly ask that you respond to the following questions:\n\n"+
+                                    "<ol>"+
+                                    "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                                    "</ol>\n"+
+                                    "Alternatively, if you prefer, I would be happy to arrange a call to discuss your request in more detail. Please let me know your availability, and I will do my best to accommodate your schedule. Additionally, please confirm whether I may contact you at the phone number associated with this case: <b>"+cPhone+"</b>.\n\n"+
+                                    "Thank you for choosing Microsoft.\n\n"+
+                                    "Sincerely,\n\n";*/
+                                    template = templatesContent["PREM_SLA_OT_PH_NANW_ENG"];
+                                }
+                            }
+                        }
+                        /*
+                        template = "Dear "+cName+",\n\n"+
+                        "Thank you very much for contacting Microsoft Customer Support!\n\n"+
+                        "We have received this service request under the number <b>"+cNumber+"</b>. While we review the details provided in the case description, please remember that you can add additional information by replying to this email.\n\n"+
+                        "Your incident is our priority, and we are committed to providing you with a resolution as quickly as possible. We will be contacting you at the email address <b>"+cEmail+"</b> registered in our system.\n\n"+
+                        "In the meantime, we would like to gather more information regarding your service request. We understand that: "+cDesc+".\n\n"+
+                        "To effectively address your concern and ensure a thorough resolution, we would like to proceed by using a test device and a test user in a controlled environment. Could you please provide the following information?\n\n"+
+                        "<ul>"+
+                        "<li>UPN:</li>"+
+                        "<li>Intune user ID:</li>"+
+                        "<li>Device name:</li>"+
+                        "</ul>\n\n"+
+                        "Additionally, could you please confirm the following:\n\n"+
+                        "<ol>"+
+                        "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                        "</ol>\n\n"+
+                        "You can use the following link to upload any file or screenshot that may help with the case.\n"+cAtt+"\n\n"+
+                        "Alternatively, if you agree, I would be happy to arrange a call to discuss this request in detail. Please let me know your availability, and I will do my best to adjust my schedule to yours. Also, confirm if I can call you at the number registered in this ticket <b>"+cPhone+"</b>.\n\n"+
+                        "Warmest regards,\n\n";*/
+                    }
+                    else if(slaLanguage === "esp"){
+                        if(slaType === "email"){
+                            if(aged === true){
+                                /*template = "Hola "+cName+",\n\n"+
+                                "¡Gracias por contactar al Soporte al Cliente de Microsoft!\n\n"+
+                                "Mi nombre es "+eName+" del equipo de Soporte de Microsoft. Me pongo en contacto en relación con el caso <b>#"+cNumber+"</b> sobre "+cDesc+" para que podamos acordar juntos el siguiente mejor paso. Reconozco que este mensaje llega más tarde de lo que razonablemente esperaría y le ofrezco una disculpa por la demora. Agradezco su paciencia mientras estaba pendiente; ahora que el caso está conmigo, lo he colocado como prioridad de hoy para avanzar sin más demora. Tenga la seguridad de que está en buenas manos.\n\n"+
+                                "Cuando tenga un momento, ¿podría indicarme si el problema continúa o si la situación se ha estabilizado de su lado?\n\n"+
+                                "Si prefiere continuar por correo, estos datos nos ayudarán a avanzar con rapidez:\n\n"
+                                "<ol>"+
+                                "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                                "</ol>\n"+
+                                "Con gusto puedo coordinar una llamada si prefiere tratar esta solicitud en detalle. Indíqueme su disponibilidad y haré lo posible por ajustar mi agenda. Además, confirme si puedo llamarle al número <b>"+cPhone+"</b> registrado en este ticket.\n\n"+
+                                "Quedamos atentos a su respuesta a la brevedad posible.\n\n"+
+                                "Saludos cordiales,\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_EM_ESP"];
+                            }
+                            else{
+                                /*template = "Estimado "+cName+",\n\n"+
+                                "¡Gracias por contactar al Soporte al Cliente de Microsoft!\n\n"+
+                                "Hemos recibido tu solicitud de servicio bajo el número <b>"+cNumber+"</b>). Mientras revisamos los detalles proporcionados en la descripción del caso, recuerda que puedes agregar información adicional respondiendo directamente a este correo electrónico.\n\n"+
+                                "Tu incidente es una prioridad para nosotros, y estamos comprometidos a brindarte una solución a la brevedad posible. Nos estaremos comunicando contigo a través de la dirección de correo electrónico "+cEmail+" registrada en nuestro sistema.\n\n"+
+                                "Entendemos que estás enfrentando una situación relacionada con "+cDesc+". Para comprender mejor el caso, te agradeceríamos que respondas a las siguientes preguntas:\n\n"+
+                                "<ol>"+
+                                "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                                "</ol>\n"+
+                                "Alternativamente, si estás de acuerdo, estaré encantado de coordinar una llamada para discutir esta solicitud en detalle. Por favor, indícame tu disponibilidad y haré lo posible por ajustarme a tu horario. También te agradecería confirmar si puedo contactarte al número registrado en este ticket: <b>"+cPhone+"</b>.\n\n"+
+                                "Gracias por elegir Microsoft. Estamos aquí para ayudarte.\n\n"+
+                                "Atentamente,\n\n";*/
+                                template = templatesContent["PREM_SLA_OT_EM_ESP"];
+                            }
+                        }
+                        else if(slaType === "phone"){
+                            if(aged === true){
+                                /*template = "Hola "+cName+",\n\n"+
+                                "¡Gracias por contactar al Soporte al Cliente de Microsoft!\n\n"+
+                                "Mi nombre es "+eName+" del equipo de Soporte de Microsoft. Me pongo en contacto en relación con el caso <b>#"+cNumber+"</b> sobre "+cDesc+"para que podamos acordar juntos el siguiente mejor paso. Reconozco que este mensaje llega más tarde de lo que razonablemente esperaría y le ofrezco una disculpa por la demora. Agradezco su paciencia mientras estaba pendiente; ahora que el caso está conmigo, lo he colocado como prioridad de hoy para avanzar sin más demora. Tenga la seguridad de que está en buenas manos.\n\n"+
+                                "¿Tiene un horario y un número de contacto de preferencia? Si no hay preferencia, lo estaré contactando al número <b>"+cPhone+"</b> que figura en el caso. Si desea que utilice otro número, por favor indíquelo en su respuesta.\n\n"+
+                                "Quedamos atentos a su respuesta y esperamos poder conectarnos pronto.\n\n"+
+                                "Saludos cordiales,\n\n";*/
+                                template = templatesContent["BC_SLA_EXP_PH_ESP"];
+                            }
+                            else{
+                                if(phType === "ph0"){
+                                    /*template = "Estimado "+cName+",\n\n"+
+                                    "Gracias por contactar al Soporte al Cliente de Microsoft.\n\n"+
+                                    "Agradezco el tiempo que se tomó para hablar conmigo hoy en relación a su solicitud de servicio bajo el número de caso <b>"+cNumber+"</b>.\n\n"+
+                                    "Entendemos que está experimentando un problema relacionado con "+cDesc+".\n\n"+
+                                    "A continuación, se presenta un resumen de nuestra conversación:\n\n"+
+                                    "<b>AQUI VA EL RESUMEN DE TU LLAMADA</b>\n\n"+
+                                    "Su caso es importante para nosotros y estamos comprometidos a resolverlo lo más pronto posible. Continuaremos contactándolo al número de teléfono <b>"+cPhone+"</b> registrado en nuestro sistema.\n\n"+
+                                    "Esperamos seguir colaborando con usted en este asunto. Si tiene más preguntas o inquietudes, no dude en comunicarse con nosotros.\n\n"+
+                                    "Gracias por elegir Microsoft. Estamos aquí para ayudarle.\n\n"+
+                                    "Atentamente,\n\n";*/
+                                    template = templatesContent["PREM_SLA_OT_PH_ANW_ESP"];
+                                }
+                                else if(phType === "ph1"){
+                                    /*template = "Estimado "+cName+",\n\n"+
+                                    "Gracias por contactar al Soporte al Cliente de Microsoft.\n\n"+
+                                    "Muchas gracias por el tiempo que me está brindando en estos momento durante nuestra llamada; es un placer atenderle. Esta comunicación tiene como objetivo informarle que, una vez finalizada nuestra interacción, le enviaré el resumen de nuestra conversación, así como el plan de acción que establezcamos.\n\n"+
+                                    "Esta solicited esta relacionada con "+cDesc+" correspondiente al caso número <b>"+cNumber+"</b>, el cual estaremos atendiendo conforme a lo acordado.\n\n"+
+                                    "Gracias por elegir Microsoft. Estamos aquí para ayudarle.\n\n"+
+                                    "Atentamente,\n\n"*/
+                                    template = templatesContent["PREM_SLA_OT_PH_LC_ESP"];
+                                }
+                                else if(phType === "ph2"){
+                                    /*template = "Estimado "+cName+",\n\n"+
+                                    "Gracias por contactar al Soporte al Cliente de Microsoft.\n\n"+
+                                    "Hemos recibido su solicitud de servicio bajo el número de caso <b>"+cNumber+"</b>Mientras revisamos los detalles proporcionados en la descripción de su caso, no dude en compartir información adicional respondiendo directamente a este correo electrónico.\n\n"+
+                                    "Su situación es importante para nosotros, y estamos comprometidos a brindarle una solución lo antes posible. Intentamos comunicarnos con usted al número de teléfono registrado en nuestro sistema <b>"+cPhone+"</b>, pero no logramos establecer contacto.\n\n"+
+                                    "Entendemos que está experimentando un problema relacionado con "+cDesc+". Para ayudarnos a comprender mejor y abordar su inquietud, le agradeceríamos que respondiera las siguientes preguntas:\n\n"+
+                                    "<ol>"+
+                                    "<li><b>HERE GOES YOUR SCOPING QUESTIONS</b></li>"+
+                                    "</ol>\n"+
+                                    "Alternativamente, si lo prefiere, estaré encantado/a de coordinar una llamada para discutir su solicitud con más detalle. Por favor, indíquenos su disponibilidad y haré lo posible por ajustarme a su horario. También le agradecería que confirmara si puedo contactarle al número registrado en este caso: <b>"+cNumber+"</b>.\n\n"+
+                                    "Gracias por elegir Microsoft.\n\n"+
+                                    "Atentamente,\n\n";*/
+                                    template = templatesContent["PREM_SLA_OT_PH_NANW_ESP"];
+                                }
+                            }
+                        }
+                    }
+
+                    console.log("PCM "+slaType+"\nLanguage "+slaLanguage+"\nPHtype "+phType);
+                    if(template.includes("NAME")) template = template.replace("NAME",cName);
+                    //if(template.includes("CALL")) template = template.replace("CALL","<b>" + callTime +" UTC-6</b>");
+                    if(template.includes("EM")) template = template.replace("EM", "<b>"+cEmail+"</b>");
+                    //if(template.includes("BHOURS")) template = template.replace("BHOURS", "<b>"+bHours+"</b>");
+                    if(template.includes("PH")) template = template = template.replace("PH","<b>" + cPhone +"</b>");
+                    if(template.includes("TICKET")) template = template.replace("TICKET","<b>" + cNumber + "</b>");
+                    if(template.includes("DESC")) template = template.replace("DESC", "<b>" + cDesc + "</b>");
+
+                    document.getElementById("premResult").innerHTML = template.replace(/\n/g,"<br>");
+                }
+            </script>
+
+            <fieldset>
+                <legend>Premier SLA Generation</legend>
+                <div class="generated-text" id="premResult" onpaste="return false" contenteditable="true"></div>
+                <script>
+                    let SLActrl = false;
+                    let SLAe = false;
+
+                    document.getElementById("premResult").addEventListener("keyup",function(event){
+                        if(event.ctrlKey){
+                            ctrl=true;
+                        }
+                        if(event.key === 'c' || event.key === 'C'){
+                            event.preventDefault();
+                            e = true;
+                        }
+                    });
+
+                    document.getElementById("premResult").addEventListener("keydown", function(event) {
+                        //const selectedText = window.getSelection().toString();
+                        if(event.ctrlKey){
+                            ctrl=true;
+                        }
+                        else{
+                            event.preventDefault();
+                        }
+                        if(event.key === 'c' || event.key === 'C'){                            
+                            e = true;
+                        }
+                        else{
+                            event.preventDefault()
+                        }
+
+                        if(ctrl && e){
+
+                        }
+                    });
+                </script>
+            </fieldset>
+
+        </div>
+
+        <!--Follow Up-->
+        <div id="tab4" class="tab-content">
+            <div class="subtab-buttons">
+                <button class="subtab-btn" id="fAbutton" data-tab="fA">SEV A</button>
+                <button class="subtab-btn active" id="fButton" data-tab="f1">Strike</button>
+                <button class="subtab-btn" data-tab="f2">Holydays</button>
+            </div>
+
+            <fieldset id="fA" class="subtab-content">
+                <legend>SEV A Unresponsive Process</legend>
+                <div>
+                    <legend>Follow Up Number:</legend>
+                    <input type="radio" id="stA" name="sAnum" value="1" checked>
+                    <label for="stA">1</label>
+                    <input type="radio" id="ndA" name="sAnum" value="2">
+                    <label for="ndA">2</label>
+                    <input type="radio" id="thA" name="sAnum" value="3">
+                    <label for="thA">3</label>
+                </div>
+                <div><legend>Time of the Call UTC-6: <input type="time" id="callTimeA"></legend></div>
+                <div style="padding-top: 10px;"><legend>Case Description: <input type="text" id="followADes" placeholder="Here goes the case description"></legend></div>
+                <div style="padding-top: 10px;"><button onclick="GenerateSEVAFollowUp()">Generate</button></div>
+            </fieldset>
+                
+            <fieldset id="f1" class="subtab-content active">
+                <legend>Unresponsive Process</legend>
+                <div>
+                    <legend>Follow Up Number:</legend>
+                    <input type="radio" id="st" name="sNum" value="1" checked>
+                    <label for="st">1</label>
+                    <input type="radio" id="nd" name="sNum" value="2">
+                    <label for="nd">2</label>
+                    <input type="radio" id="th" name="sNum" value="3">
+                    <label for="th">3</label>
+                </div>
+                <div><legend>Time of the Call UTC-6: <input type="time" id="callTime"></legend></div>
+                <div style="padding-top: 10px;"><legend>Case Description: <input type="text" id="followDes" placeholder="Here goes the case description"></legend></div>
+                <div style="padding-top: 10px;"><button onclick="GenerateFollowUp()">Generate</button></div>
+            </fieldset>
+
+            <fieldset id="f2" class="subtab-content">
+                <legend>Actual Holyday</legend>
+                <div>
+                    <input type="radio" name="hd" id="THNK" value="THNK">
+                    <label for="THNK">Thanksgiving</label>
+                    <input type="radio" name="hd" id="4J" value="4J">
+                    <label for="4J">4th of July</label>
+                    <input type="radio" name="hd" id="CD" value="CD">
+                    <label for="CD">Columbus Day</label>
+                    <input type="radio" name="hd" id="LD" value="LD">
+                    <label for="LD">Labour Day</label>
+                </div>
+                <div style="padding-top: 15px;">
+                    <button onclick="GenerateHolydays()">Generate</button>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Template Result</legend>
+                <div id="followUp"></div>
+            </fieldset>
+            <script>
+                function GenerateSEVAFollowUp(){
+                    const cName = document.getElementById("clientNameF").value;
+                    const cNumber = document.getElementById("caseNumF").value;
+                    const cPhone = document.getElementById("clientPhoneF").value;
+                    const cDes = document.getElementById("followADes").value;
+                    const timeReference = document.getElementById("callTimeA").value;
+                    const slaLanguage = document.querySelector('input[name="language"]:checked').value;
+                    const strikeNum = document.querySelector('input[name="sAnum"]:checked').value;
+
+                    //#region 12 Hours format conversor
+                    let [h, min] = timeReference.split(':');
+                    let hours = parseInt(h,10);
+                    let dayzone = '';
+                    if(hours === 0){
+                        hours = 12;
+                        dayzone = 'am';
+                    }
+                    else if(hours === 12){
+                        dayzone = 'pm';
+                    }
+                    else if(hours > 12){
+                        hours -= 12;
+                        dayzone = 'pm';
+                    }
+                    else{
+                        dayzone = 'am';
+                    }
+                    let callTime = hours+":"+min+dayzone;
+                    //#endregion
+
+                    if(slaLanguage === "eng"){
+                        if(strikeNum === "1"){
+                            /*template = "Dear "+cName+",\n\n"+
+                            "I attempted to contact you today at <b>"+callTime+" UTC-6</b> using the phone number listed in your case but was unable to reach you.\n\n"+
+                            "As we have not yet received a response, I’m following up regarding your support request <b>"+cNumber+"</b> related to <b>"+cDes+"</b>\n\n"+
+                            "Please let me know your availability, including date and time, so we can schedule a call at your convenience. If I don’t hear back, I’ll try reaching out again within the next 30 minutes.\n\n"+
+                            "Thank you in advance for your prompt response\n\n"+
+                            "Kind regards,\n\n";*/
+                            template = templatesContent["FU_SEVA_S1_ENG"];
+                        }
+                        else if(strikeNum === "2"){
+                            /*template = "Dear "+cName+",\n\n"+
+                            "I attempted to contact you today at <b>"+callTime+" UTC-6</b> at the phone number registered in your case <b>"+cPhone+"</b>, but I was unable to reach you.\n\n"+
+                            "As we have not yet received a response, I would like to follow up on your support request <b>"+cNumber+"</b> regarding <b>"+cDes+"</b>.\n\n"+
+                            "I would appreciate it if you could confirm your availability, date, and time via this channel so we can schedule a call at your convenience. If we do not receive a response, I will attempt to contact you again within the next 30 minutes.\n\n"+
+                            "We greatly appreciate your attention. If we are unable to establish contact within the indicated timeframe, the severity of the case will be reduced in accordance with our policies.\n\n"+
+                            "Kind regards,\n\n";*/
+                            template = templatesContent["FU_SEVA_S2_ENG"];
+                        }
+                        else if(strikeNum === "3"){
+                            /*template = "Dear "+cName+",\n\n"+
+                            "I attempted to contact you today at <b>"+callTime+" UTC-6</b> at the phone number registered in your case <b>"+cPhone+"</b>, but I was unable to reach you.\n\n"+
+                            "As we have not received a response to our previous attempts to contact you regarding your support request <b>"+cNumber+"</b> related to <b>"+cDes+"</b>, we would like to inform you that the severity level of the case has been lowered in accordance with our support policies.\n\n"+
+                            "Should you wish to raise the severity level again or require immediate assistance, please do not hesitate to reach out to us directly or contact your Customer Success Account Manager (CSAM).\n\n"+
+                            "We remain committed to supporting you and look forward to your response.\n\n"+
+                            "Kind regards,\n\n";*/
+                            template = templatesContent["FU_SEVA_S3_ENG"];
+                        }
+                    }
+                    else if(slaLanguage === "esp"){
+                        template = "Estimado/a "+cName+",\n\n";
+                        if(strikeNum === "1"){
+                            /*template += "Intenté comunicarme con usted hoy a las <b>"+callTime+" UTC-6</b> al número registrado en su caso, pero no fue posible localizarle.\n\n"+
+                            "Dado que aún no hemos recibido respuesta, aprovecho para dar seguimiento a su solicitud de soporte <b>"+cNumber+"</b> relacionada con <b>"+cDes+"</b>.\n\n"+
+                            "Le agradecería que me confirmara por esta vía su disponibilidad, fecha y hora, para coordinar una llamada en el momento que le resulte más conveniente. Si no recibo respuesta, intentaré contactarle nuevamente en los próximos 30 minutos.\n\n"+
+                            "Agradezco de antemano su pronta respuesta.\n\n"+
+                            "Saludos cordiales,\n\n";*/
+                            template = templatesContent["FU_SEVA_S1_ESP"];
+                        }
+                        else if(strikeNum === "2"){
+                            /*template += "Intenté comunicarme con usted hoy a las <b>"+callTime+" UTC-6</b> al número registrado en su caso <b>"+cPhone+"</b>, perono fue posible localizarle.\n\n"+
+                            "Dado que aún no hemos recibido respuesta, quisiera dar seguimiento a su solicitud de soporte <b>"+cNumber+"</b> relacionada con <b>"+cDes+"</b>.\n\n"+
+                            "Le agradecería que me confirmara por esta vía su disponibilidad, fecha y hora, para coordinar una llamada en el momento que le sea más conveniente. Si no recibimos respuesta, intentaré contactarle nuevamente en los próximos 30 minutos.\n\n"+
+                            "Agradecemos mucho su atención. Si no logramos establecer contacto dentro del plazo indicado, la severidad del caso se reducirá conforme a nuestras políticas.\n\n"+
+                            "Saludos cordiales,\n\n";*/
+                            template = templatesContent["FU_SEVA_S2_ESP"];
+                        }
+                        else if(strikeNum === "3"){
+                            /*template += "Intenté comunicarme con usted hoy a las <b>"+callTime+" UTC-6</b> al número registrado en su caso <b>"+cPhone+"</b>, pero no fue posible localizarle.\n\n"+
+                            "Dado que no hemos recibido respuesta a nuestros intentos previos de contacto respecto a su solicitud de soporte <b>"+cNumber+"</b> relacionada con <b>"+cDes+"</b>, queremos informarle que el nivel de severidad del caso ha sido reducido conforme a nuestras políticas de soporte.\n\n"+
+                            "Si desea elevar nuevamente el nivel de severidad o necesita asistencia inmediata, no dude en comunicarse directamente con nosotros o contactar a su CSAM.\n\n"+
+                            "Seguimos comprometidos con brindarle el mejor soporte y quedamos atentos a su respuesta.\n\n"+
+                            "Atentamente,\n\n";*/
+                            template = templatesContent["FU_SEVA_S3_ESP"];
+                        }
+                    }
+
+                    if(template.includes("NAME")) template = template.replace("NAME",cName);
+                    if(template.includes("TIME")) template = template.replace("TIME","<b>" + callTime +" UTC-6</b>");
+                    if(template.includes("PH")) template = template = template.replace("PH","<b>" + cPhone +"</b>");
+                    if(template.includes("TICKET")) template = template.replace("TICKET","<b>" + cNumber + "</b>");
+                    if(template.includes("DESC")) template = template.replace("DESC", "<b>" + cDes + "</b>");
+
+
+                    document.getElementById("followUp").innerHTML = template.replace(/\n/g,"<br>");
+
+                }
+
+                function GenerateHolydays(){
+                    const hd = document.querySelector('input[name=hd]:checked').value;
+                    const cName = document.getElementById("clientNameF").value;
+                    const cNumber = document.getElementById("caseNumF").value;
+
+                    if(hd === "THNK"){
+                        /*template = "Dear "+cName+",\n\n"+
+                        "I hope this email finds you well.\n\n"+
+                        "Thank you very much for contacting Microsoft Customer Support!\n\n"+
+                        "As today we celebrate Thanksgiving, we want to take a moment to express our heartfelt gratitude and appreciation for your patience and understanding.\n\n"+
+                        "We will resume contact tomorrow to continue the follow-up on your case. In the meantime, please do not hesitate to reach out if you have any questions or require further assistance.\n\n"+
+                        "Thank you for your understanding and for choosing Microsoft!\n\n"+
+                        "Best regards,\n\n";*/
+                        template = templatesContent["FU_THNK"];
+                    }
+                    else if(hd === "CD"){
+                        /*template = "Dear "+cName+",\n\n"+
+                        "On this special day, we join in celebrating the spirit of exploration, discovery, and cultural heritage that defines Columbus Day.\n\n"+
+                        "Whether you're enjoying a well-deserved break or continuing your work today, we want to take a moment to thank you for being a valued part of our community.\n\n"+
+                        "Our support team remains fully available, so if you're in the office or need assistance, rest assured that we’re here to help you as usual with any support requests.\n\n"+
+                        "We hope this long weekend brings you moments of rest, reflection, and celebration with your loved ones.\n\n"+
+                        "Happy Columbus Day!\n\n"+
+                        "Regards,\n\n";*/
+                        template = templatesContent["FU_COLUM"];
+                    }
+                    else if(hd === "LD"){
+                        /*template = "Dear "+cName+",\n\n"+
+                        "Happy Labor Day to you. We hope today offers a moment to pause and feel appreciated for all that you do.\n\n"+
+                        "This is a friendly note to let you know that your support case <b>"+cNumber+"</b> remains on our radar. While today is a U.S. federal holiday, we are here and keeping an eye on your request so it doesn’t fall off track.\n\n"+
+                        "If you’re working today, please know we’re available and happy to continue supporting you. Otherwise, we will resume full processing on the next business day with the same care and attention.\n\n"+
+                        "Thank you for being a valued part of our community. Wishing you a pleasant holiday.\n\n"+
+                        "Warm regards,\n\n";*/
+                        template = templatesContent["FU_LABOUR"];
+                    }
+                    else if(hd === "4J"){
+                        /*template = "Dear "+cName+",\n\n"+
+                        "On this special day, we join in celebrating the spirit of freedom, unity, and resilience that defines Independence Day.\n\n"+
+                        "Whether you're enjoying a well-deserved break or continuing your work today, we want to take a moment to thank you for being a valued part of our community.\n\n"+
+                        "Our support team remains fully available, so if you're in the office or need assistance, rest assured that we’re here to help you as usual with any support requests.\n\n"+
+                        "We hope this long weekend brings you moments of rest and celebration with your loved ones.\n\n"+
+                        "Happy 4th of July!\n\n"+
+                        "Regards,\n\n";*/
+                        template = templatesContent["FU_FH"];
+                    }
+
+                    if(template.includes("NAME")) template = template.replace("NAME",cName);
+                    //if(template.includes("CALL")) template = template.replace("CALL","<b>" + callTime +" UTC-6</b>");
+                    //if(template.includes("PH")) template = template = template.replace("PH","<b>" + cPhone +"</b>");
+                    if(template.includes("TICKET")) template = template.replace("TICKET","<b>" + cNumber + "</b>");
+                    //if(template.includes("DESC")) template = template.replace("DESC", "<b>" + cDes + "</b>");
+
+                    document.getElementById("followUp").innerHTML = template.replace(/\n/g,"<br>");
+                }
+
+                function GenerateFollowUp(){
+                    const cName = document.getElementById("clientNameF").value;
+                    const cNumber = document.getElementById("caseNumF").value;
+                    const cPhone = document.getElementById("clientPhoneF").value;
+                    const cDes = document.getElementById("followDes").value;
+                    const timeReference = document.getElementById("callTime").value;
+                    const slaLanguage = document.querySelector('input[name="language"]:checked').value;
+                    const strikeNum = document.querySelector('input[name="sNum"]:checked').value;
+
+                    //#region 12 Hours format conversor
+                    let [h, min] = timeReference.split(':');
+                    let hours = parseInt(h,10);
+                    let dayzone = '';
+                    if(hours === 0){
+                        hours = 12;
+                        dayzone = 'am';
+                    }
+                    else if(hours === 12){
+                        dayzone = 'pm';
+                    }
+                    else if(hours > 12){
+                        hours -= 12;
+                        dayzone = 'pm';
+                    }
+                    else{
+                        dayzone = 'am';
+                    }
+                    let callTime = hours+":"+min+dayzone;
+                    //#endregion
+
+
+                    if(slaLanguage === "eng")
+                    {
+                        if(strikeNum === "1"){
+                            /*
+                            template = "Dear "+cName+",\n\n"+
+                            "We have tried to contact you just now at <b>"+callTime+" UTC-6</b> at the phone number <b>"+cPhone+"</b>, registered in the ticket profile; however, we were unable to reach you.\n\n"+
+                            "I am following up as we have not yet received a response or update from you regarding your support request <b>"+cNumber+"</b> related to <b>"+cDes+"</b>. Your cooperation in providing the pending information would be greatly appreciated.\n\n"+
+                            "Please respond to this email confirming your availability (date and time) so that I can try to contact you at a time that is most convenient for you.\n\n"+
+                            "If we do not hear from you, we will attempt to reach out again within the next business day.\n\n"+
+                            "Thank you for your prompt attention to this matter.\n\n";*/
+
+                            template = templatesContent["FU_S1_ENG"];
+                        }
+                        else if(strikeNum === "2"){
+                            template = templatesContent["FU_S2_ENG"];
+                            /*
+                            template = "Dear "+cName+",\n\n"+
+                            "We have tried to contact you just now at <b>"+callTime+" UTC-6</b> at the phone number <b>"+cPhone+"</b>, registered in the ticket profile; however, we were unable to reach you.\n\n"+
+                            "I would like to take this opportunity to follow up on your support request <b>"+cNumber+"</b>. This is the second time we have attempted to contact you regarding your request related to <b>"+cDes+"</b>.\n\n"+
+                            "We have not received any response or update from you, so we appreciate your cooperation with the pending information. Please respond to this email confirming your availability (date and time) so that we can try to contact you again at a time that is most convenient for you.\n\n"+
+                            "If we do not receive any response from you, we will try to contact you within the next business day.\n\n"+
+                            "Kind regards,\n\n";*/
+                        }
+                        else if(strikeNum === "3"){
+                            template = templatesContent["FU_S3_ENG"];
+                            /*
+                            template = "Dear "+cName+",\n\n"+
+                            "We have tried to contact you just now at <b>"+callTime+" UTC-6</b> at the phone number <b>"+cPhone+"</b>, registered in the ticket profile; however, we were unable to reach you.\n\n"+
+                            "We have made every effort to reach you to follow up on your support request <b>"+cNumber+"</b>, but we have not yet received a response. I understand that you may have had other commitments and responsibilities to attend to, so we will be archiving the case the next business day.\n\n"+
+                            "If the issue recurs or if you have additional questions, please contact my team manager using the contact information below to request the reactivation of this case.\n\n"+
+                            "Kind regards, \n\n";*/
+                        }
+                    }
+                    else if(slaLanguage === "esp"){
+                        if(strikeNum === "1"){
+                            template = "Estimado "+cName+",\n\n"+
+                            "He intentado contactarle ahora mismo <b>"+callTime+" UTC-6</b> al número de teléfono <b>"+cPhone+"</b>, registrado en el perfil del caso, sin embargo, no pude localizarlo.\n\n"+
+                            "Debido a que no hemos recibido respuesta de su parte, quiero aprovechar esta oportunidad para dar seguimiento a su solicitud de soporte <b>"+cNumber+"</b> relacionado con <b>"+cDes+"</b>.\n\n"+
+                            "Por favor, responda a este correo confirmando su horario de disponibilidad (fecha y hora) para intentar comunicarme en una ventana de tiempo que más le convenga. Si no recibo ninguna respuesta de su parte, intentaré ponerme en contacto con usted en el próximo día hábil.\n\n"+
+                            "Agradecemos su pronta respuesta.\n\n"+
+                            "Saludos cordiales,\n\n";
+                        }
+                        else if(strikeNum === "2"){
+                            template = "Estimado "+cName+",\n\n"+
+                            "He intentado contactarle ahora mismo <b>"+callTime+" UTC-6</b> al número de teléfono <b>"+cPhone+"</b>, registrado en el perfil del caso, sin embargo, no pude localizarlo.\n\n"+
+                            "Quiero aprovechar esta oportunidad para dar seguimiento a su solicitud de soporte <b>"+cNumber+"</b>, Esta es la segunda vez que intentamos comunicarnos con usted respecto a su solicitud relacionada con <b>"+cDes+"</b>.\n\n"+
+                            "No hemos recibido ninguna respuesta o noticia de su parte, por lo que agradecemos su cooperación con la información pendiente. Por favor, responda a este correo confirmando su horario de disponibilidad (fecha y hora) para intentar comunicarme nuevamente en una ventana de tiempo que más le convenga.\n\n"+
+                            "Si no recibo ninguna respuesta de su parte, intentaré ponerme en contacto con usted en el próximo día hábil.\n\n"+
+                            "Saludos cordiales,\n\n";
+                        }
+                        else if(strikeNum === "3"){
+                            template = "Estimado "+cName+",\n\n"+
+                            "He intentado contactarle ahora mismo <b>"+callTime+" UTC-6</b> al número de teléfono <b>"+cPhone+"</b>, registrado en el perfil del caso, sin embargo, no pude localizarlo.\n\n"+
+                            "Hemos hecho todo lo posible por comunicarnos con usted para darle continuidad a su solicitud de soporte <b>"+cNumber+"</b>, pero aún no hemos recibido respuesta. Entiendo que puede haber tenido otros compromisos y responsabilidades que atender, por lo cual estaré archivando el caso el próximo día hábil.\n\n"+
+                            "Si el problema vuelve a ocurrir o si tiene preguntas adicionales, por favor comuníquese con mi gerente de equipo utilizando la información de contacto a continuación para solicitar la reactivación de este caso.\n\n"+
+                            "Saludos cordiales,\n\n";
+                        }
+                    }
+
+                    if(template.includes("NAME")) template = template.replace("NAME",cName);
+                    if(template.includes("CALL")) template = template.replace("CALL","<b>" + callTime +" UTC-6</b>");
+                    if(template.includes("PH")) template = template = template.replace("PH","<b>" + cPhone +"</b>");
+                    if(template.includes("TICKET")) template = template.replace("TICKET","<b>" + cNumber + "</b>");
+                    if(template.includes("DESC")) template = template.replace("DESC", "<b>" + cDes + "</b>");
+                    
+                    document.getElementById("followUp").innerHTML = template.replace(/\n/g,"<br>");
+                }
+            </script>
+        </div>
+
+        <!--Closure-->
+        <div id="tab5" class="tab-content">
+            <div>
+                <legend style="display: block">Feedback URL</legend>
+                <input type="text" id="Feedback" placeholder="Here goes the survey url" style="display: block">
+                <legend>Symtom:</legend>
+                <input type="text" id="cSymptom" placeholder="Here goes the case issue" style="height: 50px; width: 750px;">
+                <legend>Cause:</legend>
+                <input type="text" id="cCause" placeholder="Here goes the case issue" style="height: 50px; width: 750px;">
+                <legend>Solution:</legend>
+                <input type="text" id="cSolution" placeholder="Here goes the case issue" style="height: 50px; width: 750px;">
+            </div>
+
+            <div>
+                <button id="closure" onclick="GenerateClosure()">Generate Closure</button>
+                <script>
+
+                    function selectText() {
+                        const element = document.getElementById("closureResult");
+
+                        if (document.body.createTextRange) { // Para IE
+                            var range = document.body.createTextRange();
+                            range.moveToElementText(element);
+                            range.select();
+                        } else if (window.getSelection) { // Para navegadores modernos
+                            var range = document.createRange();
+                            range.selectNodeContents(element);
+                            var selection = window.getSelection();
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        }
+                    }
+
+                    function GenerateClosure(){
+                        const cName = document.getElementById("clientNameF").value;
+                        const cNumber = document.getElementById("caseNumF").value;
+                        const Survey = document.getElementById("Feedback").value;
+                        const cSurvey = `<a href="${Survey}" target="_blank">${Survey}</a>`;
+                        const cSympt = document.getElementById("cSymptom").value;
+                        const cCause = document.getElementById("cCause").value;
+                        const cSolution = document.getElementById("cSolution").value;
+                        const cLanguage = document.querySelector('input[name="language"]:checked').value;
+
+                        if(cLanguage === "eng"){
+                            if(Survey !== ""){
+                                /*template = "Dear "+cName+",\n\n"+
+                                "Thank you very much for contacting Microsoft Customer Support!\n\n"+
+                                "Your feedback is important to us. A feedback request option will appear within the case in M365 Admin Center with an opportunity to tell us about your experience.\n"+cSurvey+"\n\n"+
+                                "Your opinion is valuable to us!\n\n"+
+                                "Thank you for your time and cooperation. I will proceed to archive this service request <b>#"+cNumber+"</b>. If any additional issues related to this case arise, you can request its reopening.\n\n"+
+                                "Below, I include a summary of the incident:\n\n"+
+                                "<b>Symptom:</b>\n"+cSympt+"\n\n"+
+                                "<b>Cause:</b>\n"+cCause+"\n\n"+
+                                "<b>Solution:</b>\n"+cSolution+"\n\n"+
+                                "Best regards,\n\n";*/
+                                template = templatesContent["CL_LN_ENG"];
+                            }
+                            else{
+                                /*template = "Dear "+cName+",\n\n"+
+                                "Thank you very much for contacting Microsoft Customer Support!\n\n"+
+                                "Your feedback is important to us. A feedback request option will appear within the case in M365 Admin Center with an opportunity to tell us about your experience."+cSurvey+"\n\n"+
+                                "Your opinion is valuable to us!\n\n"+
+                                "Thank you for your time and cooperation. I will proceed to archive this service request <b>#"+cNumber+"</b>. If any additional issues related to this case arise, you can request its reopening.\n\n"+
+                                "Below, I include a summary of the incident:\n\n"+
+                                "<b>Symptom:</b>\n"+cSympt+"\n\n"+
+                                "<b>Cause:</b>\n"+cCause+"\n\n"+
+                                "<b>Solution:</b>\n"+cSolution+"\n\n"+
+                                "Best regards,\n\n";*/
+                                template = templatesContent["CL_ENG"];
+                            }
+                        }
+                        else if (cLanguage === "esp")
+                        {
+                            if(Survey !== ""){
+                                /*template = "Estimado "+cName+",\n\n"+
+                                "¡Muchas gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                "Sus comentarios son importantes para nosotros. Después de esta interacción, quedará disponible en el Centro de Administración M365 un pedido de opinión, donde podrá informarnos sobre su experiencia de soporte.\n"+cSurvey+"\n\n"+
+                                "¡Su opinión es valiosa para nosotros!\n\n"+
+                                "Gracias por su tiempo y colaboración. Voy a proceder al archivado de esta solicitud de servicio <b>#"+cNumber+"</b>. Si surgiese algún problema adicional relacionado con este caso, puede solicitar la reapertura del mismo.\n\n"+
+                                "A continuación, incluyo un resumen de la incidencia:\n\n"+
+                                "<b>Sintoma:</b>\n"+cSympt+"\n\n"+
+                                "<b>Causa:</b>\n"+cCause+"\n\n"+
+                                "<b>Solución:</b>\n"+cSolution+"\n\n"+
+                                "Saludos cordiales,\n\n";*/
+                                template = templatesContent["CL_LN_ESP"];
+                            }
+                            else{
+                                /*template = "Estimado "+cName+",\n\n"+
+                                "¡Muchas gracias por contactar al soporte al cliente de Microsoft!\n\n"+
+                                "Sus comentarios son importantes para nosotros. Después de esta interacción, quedará disponible en el Centro de Administración M365 un pedido de opinión, donde podrá informarnos sobre su experiencia de soporte."+cSurvey+"\n\n"+
+                                "¡Su opinión es valiosa para nosotros!\n\n"+
+                                "Gracias por su tiempo y colaboración. Voy a proceder al archivado de esta solicitud de servicio <b>#"+cNumber+"</b>. Si surgiese algún problema adicional relacionado con este caso, puede solicitar la reapertura del mismo.\n\n"+
+                                "A continuación, incluyo un resumen de la incidencia:\n\n"+
+                                "<b>Sintoma:</b>\n"+cSympt+"\n\n"+
+                                "<b>Causa:</b>\n"+cCause+"\n\n"+
+                                "<b>Solución:</b>\n"+cSolution+"\n\n"+
+                                "Saludos cordiales,\n\n";*/
+                                template = templatesContent["CL_ESP"];
+                            }
+                        }
+
+                        //result = boldString(template,)
+
+                        if(template.includes("NAME")) template = template.replace("NAME",cName);
+                        if(template.includes("TICKET")) template = template.replace("TICKET","<b>" + cNumber + "</b>");
+                        if(template.includes("LINK")) template = template.replace("LINK",cSurvey);
+                        if(template.includes("SYNT")) template = template.replace("SYNT",cSympt);
+                        if(template.includes("CAUSE")) template = template.replace("CAUSE",cCause);
+                        if(template.includes("SOL")) template = template.replace("SOL",cSolution);
+
+                        document.getElementById("closureResult").innerHTML = template.replace(/\n/g,"<br>")
+                    }
+                </script>
+            </div>
+            <fieldset>
+                <legend>Generated Template</legend>
+                <div class="generated-text" id="closureResult" onkeydown="" onpaste="return false" contenteditable="true"></div>
+                <script>
+                    let CSctrl = false;
+                    let CSe = false;
+
+                    document.getElementById("closureResult").addEventListener("keyup",function(event){
+                        if(event.ctrlKey){
+                            ctrl=true;
+                        }
+                        if(event.key === 'c' || event.key === 'C'){
+                            event.preventDefault();
+                            e = true;
+                        }
+                    });
+
+                    document.getElementById("closureResult").addEventListener("keydown", function(event) {
+                        //const selectedText = window.getSelection().toString();
+                        if(event.ctrlKey){
+                            ctrl=true;
+                        }
+                        else{
+                            event.preventDefault();
+                        }
+                        if(event.key === 'c' || event.key === 'C'){                            
+                            e = true;
+                        }
+                        else{
+                            event.preventDefault()
+                        }
+
+                        if(ctrl && e){
+
+                        }
+                    });
+                </script>
+            </fieldset>
+        </div>        
+
+        <!--SAW Request-->
+        <div id="tab6" class="tab-content">
+            <fieldset>
+                <legend>Request Info</legend>
+                <div>
+                    <legend>Autopilot Device Upload Error</legend>
+                    <input id="808" type="radio" name="eType" value="808">
+                    <label for="808">808</label>
+                    <input id="806" type="radio" name="eType" value="806" checked="true">
+                    <label for="806">806</label>
+                    <legend>Device/s Serial Number/s(Multiple serials must be separated by comas)</legend>
+                    <input id="cSerial" type="text" placeholder="Here goes the device/s serial number/s">
+                    <legend>Is CSV file collected?<input id="cCSV" type="checkbox" checked="True"></legend>
+                    <legend>Is proof of ownership collected?<input id="cOwn" type="checkbox" checked="True"></legend>
+                    <legend>Customer Context ID:</legend>
+                    <input id="cContext" type="text" placeholder="ASIST365>APPLICATIONS>INTUNE>DATA>CONTEXT ID" style="width: 300pt;">
+                    <legend>Default Domain</legend>
+                    <input id="cDomain" type="text" placeholder="AKA Initial Domain">
+                    <div></div>
+                    <button id="req" onclick="CompleteRequest()">Generate Request</button>
+
+                    <script>
+                        function CompleteRequest(){
+                            const cError = document.querySelector('input[name="eType"]:checked').value;
+                            const cSerials = document.getElementById("cSerial").value;
+                            const cCSV = document.getElementById("cCSV").checked;
+                            const cOwn = document.getElementById("cOwn").checked;
+                            const cContext = document.getElementById("cContext").value;
+                            const cDomain = document.getElementById("cDomain").value;
+                            const cNumber = document.getElementById("caseNumF").value;
+                            let dev = cSerials.split('');
+                            let serials = [];
+                            let temp = [];
+                            let fxSerials = "";
+                            let lastC = 0;
+                            let cDev = 1;
+
+                            for(let i=0;i<dev.length;i++){
+                                if(dev[i] === ','){
+                                    serials.push(new String(temp.join('')));
+                                    temp.length = 0;
+                                    cDev++;
+                                }else{
+                                    temp.push(dev[i]);
+                                }
+                                
+                                if(i === dev.length-1){
+                                    serials.push(new String(temp.join('')));
+                                    temp.length = 0;
+                                }
+                            }
+
+                            for(let i=0;i<serials.length;i++){
+                                if(i != serials.length-1){
+                                    fxSerials += serials[i]+", ";
+                                }
+                                else{
+                                    fxSerials += serials[i];
+                                }
+                            }
+
+                            if(cSerials === ""){
+                                msgTemp = "<b>Add Serial Numbers</b>";
+                                noteTemp = "<b>Add Serial Numbers</b>";
+                                scope = "<b>Add Serial Numbers</b>";
+                            }
+                            else{
+
+                                if(cDev > 1){
+                                    noteTemp = "<ul>"+
+                                    "<li>Serial Numbers: "+fxSerials+"</li>"+
+                                    "<li>Is CSV file collected: "+(cCSV ? "Yes" : "No")+"</li>"+
+                                    "<li>Is proof of ownership collected: "+(cOwn ? "Yes" : "No")+"</li>"+
+                                    "<li>Results of Assist365 search: <b>HERE GOES THE RESULT</b></li>"+
+                                    "<li>Customer Context ID: "+cContext+"</li>"+
+                                    "<li>Default Domain: "+cDomain+"</li>"+
+                                    "<ul>\n\n<b>REMEMBER ADDING CAPTURES OF THE DEVICE SEARCH IN ASSIST365</b>\n\n";
+
+                                    if(cError === "808"){
+                                        scope = "<b>Issue:</b>\n"+
+                                        "The hardware hash of a device is unable to be uploaded to Intune for the Autopilot enrollment due to error 808, which indicates that the device is registered on another tenant.\n\n"+
+                                        "<b>Cause:</b>\n"+
+                                        "The error occurs because the device's hardware hash is already associated with a different tenant, preventing it from being uploaded to Intune for the Autopilot enrollment.\n\n"+
+                                        "<b>Solution:</b>\n\n"+
+                                        "The deregistration process was completed from our end and the device should be able to register to your company.\n\n"+
+                                        "<b>Scope Agreement:</b>\n"+
+                                        "We will consider the case as resolved and the case ready for closure once the devices "+fxSerials+" are successfully deregistered from the other tenant and you can enroll it to your organization. Alternatively, we will consider this case resolved if we confirm that the problem is caused by a third-party application or is by-design.\n\n";
+                                    }
+                                    else if(cError === "806"){
+                                        scope = "<b>Issue:</b>\n"+
+                                        "The hardware hash of a device is unable to be uploaded to Intune for the Autopilot enrollment due to error 806, which indicates that the device is already registered on your tenant.\n\n"+
+                                        "<b>Cause:</b>\n"+
+                                        "The error occurs because the device's hardware hash is already associated with your tenant, preventing it from being uploaded to Intune for the Autopilot enrollment.\n\n"+
+                                        "<b>Solution:</b>\n\n"+
+                                        "The deregistration process was completed from our end and the device should be able to register to your company.\n\n"+
+                                        "<b>Scope Agreement:</b>\n"+
+                                        "We will consider the case as resolved and the case ready for closure once the devices "+fxSerials+" are successfully deregistered from your tenant and you can enroll it to your organization. Alternatively, we will consider this case resolved if we confirm that the problem is caused by a third-party application or is by-design.\n\n";
+                                    }
+                                }
+                                else{
+                                    noteTemp = "<ul>"+
+                                    "<li>Serial Number: "+fxSerials+"</li>"+
+                                    "<li>Is CSV file collected: "+(cCSV ? "Yes" : "No")+"</li>"+
+                                    "<li>Is proof of ownership collected: "+(cOwn ? "Yes" : "No")+"</li>"+
+                                    "<li>Results of Assist365 search: <b>HERE GOES THE RESULT</b></li>"+
+                                    "<li>Customer Context ID: "+cContext+"</li>"+
+                                    "<li>Default Domain: "+cDomain+"</li>"+
+                                    "<ul>\n\n<b>REMEMBER ADDING CAPTURES OF THE DEVICE SEARCH IN ASSIST365</b>\n\n";
+
+                                    if(cError === "808"){
+                                        scope = "<b>Issue:</b>\n"+
+                                        "The hardware hash of a device is unable to be uploaded to Intune for the Autopilot enrollment due to error 808, which indicates that the device is registered on another tenant.\n\n"+
+                                        "<b>Cause:</b>\n"+
+                                        "The error occurs because the device's hardware hash is already associated with a different tenant, preventing it from being uploaded to Intune for the Autopilot enrollment.\n\n"+
+                                        "<b>Solution:</b>\n\n"+
+                                        "The deregistration process was completed from our end and the device should be able to register to your company.\n\n"+
+                                        "<b>Scope Agreement:</b>\n"+
+                                        "We will consider the case as resolved and the case ready for closure once the device "+fxSerials+" is successfully deregistered from the other tenant and you can enroll it to your organization. Alternatively, we will consider this case resolved if we confirm that the problem is caused by a third-party application or is by-design.\n\n";
+                                    }
+                                    else if(cError === "806"){
+                                        scope = "<b>Issue:</b>\n"+
+                                        "The hardware hash of a device is unable to be uploaded to Intune for the Autopilot enrollment due to error 806, which indicates that the device is already registered on your tenant.\n\n"+
+                                        "<b>Cause:</b>\n"+
+                                        "The error occurs because the device's hardware hash is already associated with your tenant, preventing it from being uploaded to Intune for the Autopilot enrollment.\n\n"+
+                                        "<b>Solution:</b>\n\n"+
+                                        "The deregistration process was completed from our end and the device should be able to register to your company.\n\n"+
+                                        "<b>Scope Agreement:</b>\n"+
+                                        "We will consider the case as resolved and the case ready for closure once the device "+fxSerials+" is successfully deregistered from your tenant and you can enroll it to your organization. Alternatively, we will consider this case resolved if we confirm that the problem is caused by a third-party application or is by-design.\n\n";
+                                    }
+                                }
+
+                                msgTemp = "Hello Team,\n\n"+
+                                "I have the following case ready to submit as a SAW request (Autopilot deregistration)\n\n"+
+                                "<b>"+cNumber+"</b>\n\n"+
+                                "Number of devices: "+cDev+"\n\n"+
+                                "Form is filled and notes complete.";
+                            }                            
+
+                            document.getElementById("scope").innerHTML = scope.replace(/\n/g,"<br>");
+                            document.getElementById("note").innerHTML = noteTemp.replace(/\n/g,"<br>");
+                            document.getElementById("msg").innerHTML = msgTemp.replace(/\n/g,"<br>");
+                        }
+                    </script>
+                </div>
+            </fieldset>        
+            <fieldset>
+                <legend>Scope Agreement</legend>
+                <div id="scope" contenteditable="false" style="border: 1px solid #ccc; padding: 10px;"></div>
+            </fieldset>
+            <fieldset>
+                <legend>Note Prompt</legend>
+                <div id="note" contenteditable="false" style="border: 1px solid #ccc; padding: 10px;"></div>
+            </fieldset>
+            <fieldset>
+                <legend>Group Message Prompt</legend>
+                <div id="msg" contenteditable="false" style="border: 1px solid #ccc; padding: 10px;"></div>
+            </fieldset>
+        </div>
+
+        <!--22 Days Note-->
+        <div id="tab7" class="tab-content">
+            <fieldset>
+                <legend><b>Case information</b></legend>
+                <div>
+                    Scope Agreement:<div></div>
+                    <textarea id="cScope" style="width: 400px; height: 150px;"></textarea><div></div>
+                    Business Impact:<div></div>
+                    <textarea id="cImpact" style="width: 400px; height: 150px;"></textarea><div></div>
+                    Observed Behavior:<div></div>
+                    <textarea id="cBehavior" style="width: 400px; height: 150px;"></textarea><div></div>
+                    Action Plan:<div></div>
+                    <textarea id="cAction" style="width: 400px; height: 150px;"></textarea>
+                </div>
+                <button onclick="OldCaseDaysNote()">Generate</button>
+            </fieldset>
+            <fieldset>
+                <div id="22days" contenteditable="false" style="border: 1px solid #ccc; padding: 10px;"></div>                
+            </fieldset>
+            <script>
+                function OldCaseDaysNote(){
+                    let scope = document.getElementById("cScope").value;
+                    let impact = document.getElementById("cImpact").value;
+                    let behavior = document.getElementById("cBehavior").value;
+                    let action = document.getElementById("cAction").value;
+
+
+                    template = "<b>Case Summary Note</b>\n"+
+                    "<ul>"+
+                        "<li>Case Number:</li>"+
+                            "<ul><li>"+cNumber.value+"</li></ul>"+
+                        "<li>Scope Agreement:</li>"+
+                            "<ul><li>"+scope+"</li></ul>"+
+                        "<li>Business Impact:</li>"+
+                            "<ul><li>"+impact+"</li></ul>"+
+                        "<li>Observed Behavior:</li>"+
+                            "<ul><li>"+behavior+"</li></ul>"+
+                        "<li>Relevant Screenshots:\n <b>REMEMBER INSERTING YOUR SCREENSHOTS</b></li>"+
+                        "<li>Action Plan:</li>"+
+                            "<ul><li>"+action+"</li></ul>"+
+                    "</ul>";
+
+                    document.getElementById("22days").innerHTML = template.replace(/\n/g,"<br>");
+                }
+            </script>
+
+        </div>
+
+        <div id="tab8" class="tab-content">
+            <div>
+                <b>IET TEMPLATE | ASSISTANCE REQUEST | </b><input type="text" id="ietTitle" placeholder="Case Title">
+            </div>
+            <fieldset>
+                <legend>Basic Information</legend>
+                <div>
+                    <b>Title:</b><input type="text" id="compName" placeholder="Company Name"><b> - </b><input type="text" id="ietDesc" placeholder="One line description">
+                </div>
+                <div>
+                    <b>TA | TL Engaged:</b><input type="text" id="TA" placeholder="TA NAME / TA v-"><b> | </b><input type="text" id="TL" placeholder="TL NAME / TL v-">
+                </div>
+                <div>
+                    <b>Assistance Required:</b><input type="radio" name="aRequested" value="ICM" checked="true" id="i"><label for="i">ICM</label><input type="radio" name="aRequested" value="RFC" id="r"><label for="r">RFC</label><input type="radio" name="aRequested" value="DCR" id="d"><label for="d">DCR</label>
+                    <input type="text" id="assistance" placeholder="What needs to be fixed?">
+                </div>
+                <div>
+                    <b>Date Issue Started:</b><input type="text" id="iDate" placeholder="Here goes the date">
+                </div>
+                <div>
+                    <b>Default Domain name:</b><input type="text" id="dDomain" placeholder="DEFAULT DOMAIN AKA INITIAL DOMAIN">
+                </div>
+                <div>
+                    <b>Company ID:</b><input type="text" id="tID" placeholder="COMPANY ID AKA TENANT ID">
+                </div>
+                <div>
+                    <b>MDM Authority:</b><input type="text" id="MDM" placeholder="ASSIST365>APPLICATIONS>INTUNE>TENANT OVERVIEW">
+                </div>
+                <div>
+                    <b>ASU:</b><input type="text" id="ASU" placeholder="ASSIST365>APPLICATIONS>INTUNE>TENANT OVERVIEW">
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend><b>Issue Details</b></legend>
+                <div>
+                    <b>Issue Summary:<br></b>
+                    <textarea id="iSum" style="height: 100px; width: 600px;"></textarea><br>
+                    <b>Impact:<br></b>
+                    <textarea id="imp" style="height: 100px; width: 600px;"></textarea><br>
+                    <b>Approx. affected user count:</b><input type="text" id="usrCount"><br>
+                    <b>Is this a POC (proof of concept):</b><input type="checkbox" id="POC"><br>
+                    <b>Is this blocking users from working:</b><input type="checkbox" id="avoidWork" onclick="ShowAvoidWorkARG()"><br>
+                    <b id="argHeader" style="display: none;">Why avoids Work:</b>
+                    <textarea id="avoidARG" style="height: 100px; width: 600px; display: none;"></textarea>
+                    <b>Will this issue cause delay on customer project(s) if not resolved quickly:</b><input type="checkbox" id="cusDelay" onclick="ShowDeadline()">
+                    <div id="dl" style="display: none;">
+                        <b>Customer deadline:</b><input type="text" id="deadline" placeholder="Customer deadline">
+                    </div><br id="si">
+                    <b>Anything else that should be known on Impact:</b><br>
+                    <textarea id="addImpc" style="height: 100px; width: 600px;"></textarea>
+                </div>
+                <script>
+                    function ShowAvoidWorkARG(){
+                        let avoidW = document.getElementById("avoidWork").checked;
+                        let avoidARG = document.getElementById("avoidARG");
+                        let argH = document.getElementById("argHeader");
+
+                        if(avoidW) {
+                            avoidARG.style.display = "block";
+                            argH.style.display = "block";
+                        }
+                        else {
+                            avoidARG.style.display = "none";
+                            argH.style.display = "none";
+                        }
+                    }
+
+                    function ShowDeadline(){
+                        let isDelaying = document.getElementById("cusDelay").checked;
+                        let deadline = document.getElementById("dl");
+                        let si = document.getElementById("si");
+
+                        if(isDelaying){
+                            deadline.style.display = "block";
+                            si.style.display = "none";
+                        }
+                        else {
+                            deadline.style.display = "none";
+                            si.style.display = "block";
+                        }
+                    }
+                </script>
+            </fieldset>
+
+            <fieldset>
+                <legend><b>Behavior Details</b></legend>
+                <div>
+                    <b>Expected Behavior:</b><br>
+                    <textarea id="eBh" style="height: 100px; width: 600px;"></textarea><br>
+                    <b>Article Referenced for Expected Behavior:</b><input type="text" id="artBH"><br>
+                    <b>Observed Behavior:</b><br>
+                    <textarea id="oBh" style="height: 100px; width: 600px;"></textarea><br>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend><b>Affected Users/Devices/Policies</b></legend>
+                <div>
+                    <b>Are users affected?</b><input type="checkbox" id="usr" onclick="ShowUsers()"><br>
+                    <div id="aUSR" style="display: none;">
+                        <div id="usersInfo"></div>
+                        <button id="addUsrBnt" onclick="AddUserInfo()">Add User</button>
+                        <button id="removeUsrBnt" onclick="RemoveUserInfo()">Remove User</button>
+                    </div>
+                    <b>Are devices affected?</b><input type="checkbox" id="dvs" onclick="ShowDevices()"><br>
+                    <div id="aDVS" style="display: none;">
+                        <div id="dInfo"></div>
+                        <button id="addDevBnt" onclick="AddDeviceInfo()">Add Device</button>
+                        <button id="removeDevBnt" onclick="RemoveDeviceInfo()">Remove Device</button>
+                    </div>
+                    <b>Are policies affected</b><input type="checkbox" id="pl" onclick="ShowPolicies()"><br>
+                    <div id="aPL" style="display: none;">
+                        <div id="plInfo"></div>
+                        <button id="addPlBnt" onclick="AddPolicyInfo()">Add Policy</button>
+                        <button id="removeDevBnt" onclick="RemovePolicyInfo()">Remove Policy</button>
+                    </div>
+                </div>
+
+                <script>
+                    let users = 0;
+                    let devices = 0;
+                    let policies = 0;
+                    let usrs = [];
+
+                    function ShowDevices(){
+                        const cDVS = document.getElementById("dvs").checked;
+
+                        if(cDVS === true){
+                            aDVS.style.display = "block";
+                            if(devices === 0) AddDeviceInfo();
+                        }
+                        else aDVS.style.display = "none";
+                    }
+
+                    function ShowPolicies(){
+                        const cPL = document.getElementById("pl").checked;
+                        
+                        if(cPL === true){
+                            aPL.style.display = "block";
+                            if(policies === 0) AddPolicyInfo();
+                        }
+                        else aPL.style.display = "none";
+                    }
+
+                    function ShowUsers(){
+                        const cUSR = document.getElementById("usr").checked;
+                    
+                        if(cUSR === true) {
+                            aUSR.style.display = "block";
+                            if(users === 0) AddUserInfo();
+                        }
+                        else {
+                            aUSR.style.display = "none";
+                            RemoveUserInfo(true);
+                        }
+                    }
+                    
+                    function AddUserInfo(){
+                        
+                        if(users < 3){
+                            let ndiv = document.createElement("fieldset");
+                            ndiv.id = "user"+(users+1);
+                            let lng = document.createElement("legend");
+                            lng.innerHTML = "<b>User "+(users+1)+":</b>";
+                            ndiv.appendChild(lng);
+
+                            let upn = document.createElement("b");
+                            upn.innerHTML = 'UPN: ';
+                            let upnT = document.createElement("input");
+                            upnT.type = "text";
+                            upnT.id = "upn"+(users+1);
+                            upnT.placeholder = "User UPN";
+                            ndiv.appendChild(upn);
+                            ndiv.appendChild(upnT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let usrID = document.createElement("b");
+                            usrID.innerHTML = 'User ID: ';
+                            let usrIDT = document.createElement("input");
+                            usrIDT.type = "text";
+                            usrIDT.id = "userID"+(users+1);
+                            usrIDT.placeholder = "Intune User ID";
+                            ndiv.appendChild(usrID);
+                            ndiv.appendChild(usrIDT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let lic = document.createElement("b");
+                            lic.innerHTML = 'Intune Licenced?';
+                            let licC = document.createElement("input");
+                            licC.type = "checkbox";
+                            licC.id = "intuneLic"+(users+1);
+                            ndiv.appendChild(lic);
+                            ndiv.appendChild(licC);
+                            usersInfo.appendChild(ndiv);
+
+                            users++;
+                            usrs.push(ndiv);
+                            
+                            if(users === 3){
+                                document.getElementById("addUsrBnt").disabled = true;
+                            }
+                        }
+                    }
+                
+                    function AddDeviceInfo(){
+                        var platforms = ["Windows","Android","iOS/iPadOS","MacOS","Linux"];
+
+                        if(devices < 3){
+                            let ndiv = document.createElement("fieldset");
+                            ndiv.id = "device"+(devices+1);
+                            let lng = document.createElement("legend");
+                            lng.innerHTML = "<b>Device "+ (devices+1) +"</b>";
+                            ndiv.appendChild(lng);
+
+                            let devID = document.createElement("b");
+                            devID.innerHTML = "Intune Device ID: ";
+                            let devIDT = document.createElement("input");
+                            devIDT.type = "text";
+                            devIDT.id = "devID"+(devices+1);
+                            devIDT.placeholder = "Intune Device ID";
+                            ndiv.appendChild(devID);
+                            ndiv.appendChild(devIDT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let aadD = document.createElement("b");
+                            aadD.innerHTML = "AAD Device ID: ";
+                            let aadDT = document.createElement("input");
+                            aadDT.type = "text";
+                            aadDT.id = "aadDevID"+(devices+1);
+                            aadDT.placeholder = "AAD Device ID";
+                            ndiv.appendChild(aadD);
+                            ndiv.appendChild(aadDT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let aao = document.createElement("b");
+                            aao.innerHTML = "AAD Object ID: ";
+                            let aaoT = document.createElement("input");
+                            aaoT.type = "text";
+                            aaoT.id = "aadObjID"+(devices+1);
+                            aaoT.placeholder = "AAD Object ID";
+                            ndiv.appendChild(aao);
+                            ndiv.appendChild(aaoT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let dn = document.createElement("b");
+                            dn.innerHTML = "Device Name: ";
+                            let dnT = document.createElement("input");
+                            dnT.type = "text";
+                            dnT.id = "devName"+(devices+1);
+                            dnT.placeholder = "Device Name";
+                            ndiv.appendChild(dn);
+                            ndiv.appendChild(dnT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let sn = document.createElement("b");
+                            sn.innerHTML = "Serial Number: ";
+                            let snT = document.createElement("input");
+                            snT.type = "text";
+                            snT.id = "serNum"+(devices+1);
+                            snT.placeholder = "Serial Number";
+                            ndiv.appendChild(sn);
+                            ndiv.appendChild(snT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let os = document.createElement("b");
+                            os.innerHTML = "Platform";
+                            let sd = document.createElement("div");
+                            sd.id = "SKU"+(devices+1);
+                            let plt = document.createElement("select");
+                            plt.id = "devOS"+(devices+1);
+                            for(i=0;i<platforms.length;i++){
+                                o = document.createElement("option");
+                                o.value = platforms[i];
+                                o.text = platforms[i];
+                                plt.appendChild(o);
+                            }
+                            plt.addEventListener("change", function (){
+                                platform = plt;
+                                let sku = sd;
+
+                                if(platform.value === "Windows"){
+                                    sku.style.display = "block";
+                                }
+                                else{
+                                    sku.style.display = "none";
+                                }
+                            });
+                            ndiv.appendChild(os);
+                            ndiv.appendChild(plt);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let m = document.createElement("b");
+                            m.innerHTML = "Model: ";
+                            let mod = document.createElement("input");
+                            mod.type = "text";
+                            mod.id = "devModel"+(devices+1);
+                            mod.placeholder = "Device Model";
+                            ndiv.appendChild(m);
+                            ndiv.appendChild(mod);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let ver = document.createElement("b");
+                            ver.innerHTML = "OS Version Number: ";
+                            let verT = document.createElement("input");
+                            verT.type = "text";
+                            verT.id = "OSver"+(devices+1);
+                            verT.placeholder = "OS Version Number";
+                            ndiv.appendChild(ver);
+                            ndiv.appendChild(verT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let sk = document.createElement("b");
+                            sk.innerHTML = "SKU: ";
+                            let sku = document.createElement("input");
+                            sku.type = "text";
+                            sku.id = "devSKU"+(devices+1);
+                            sd.appendChild(sk);
+                            sd.appendChild(sku);
+                            ndiv.appendChild(sd);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let e = document.createElement("b");
+                            e.innerHTML = "Enrollment Method: ";
+                            let enr = document.createElement("input");
+                            enr.type = "text";
+                            enr.id = "enrMethod"+(devices+1);
+                            enr.placeholder = "Enrollment Method";
+                            ndiv.appendChild(e);
+                            ndiv.appendChild(enr);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let r = document.createElement("b");
+                            r.innerHTML = "Reference Intune: ";
+                            let ref = document.createElement("select");
+                            ref.id = "A365ref"+(devices+1);
+
+                            let ad = document.createElement("b");
+                            ad.innerHTML = "Additional Information";
+                            let add = document.createElement("textarea");
+                            add.id = "addInfo"+(devices+1);
+                            add.style.width = "300px";
+                            add.style.height = "100px";
+                            ndiv.appendChild(ad);
+                            ndiv.appendChild(document.createElement("br"));
+                            ndiv.appendChild(add);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let c = document.createElement("b");
+                            c.innerHTML = "CP Incident ID";
+                            let cp = document.createElement("input");
+                            cp.type = "text";
+                            cp.id = "CP"+(devices+1);
+                            cp.placeholder = "Company Portal Incident ID";
+                            ndiv.appendChild(c);
+                            ndiv.appendChild(cp);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            dInfo.appendChild(ndiv);
+
+                            devices++;
+
+                            if(devices === 3){
+                                document.getElementById("addDevBnt").disabled = true;
+                            }
+                        }
+                    }
+                
+                    function AddPolicyInfo(){
+
+                        if(policies < 3){
+                            let ndiv = document.createElement("fieldset");
+                            ndiv.id = "policy"+(policies+1);
+                            let lg = document.createElement("legend");
+                            lg.innerHTML = "<b>Policy "+(policies+1)+"</b>";
+                            ndiv.appendChild(lg);
+
+                            let typ = document.createElement("b");
+                            typ.innerHTML = "Policy Type: ";
+                            let ty = document.createElement("input");
+                            ty.type = "text";
+                            ty.id = "polType"+(policies+1);
+                            ty.placeholder = "Policy Type";
+                            ndiv.appendChild(typ);
+                            ndiv.appendChild(ty);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let nm = document.createElement("b");
+                            nm.innerHTML = "Policy Name: ";
+                            let n = document.createElement("input");
+                            n.type = "text";
+                            n.id = "polName"+(policies+1);
+                            n.placeholder = "Policy Name";
+                            ndiv.appendChild(nm);
+                            ndiv.appendChild(n);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let id = document.createElement("b");
+                            id.innerHTML = "Policy ID: ";
+                            let i = document.createElement("input");
+                            i.type = "text";
+                            i.id = "polID"+(policies+1);
+                            i.placeholder = "Policy ID";
+                            ndiv.appendChild(id);
+                            ndiv.appendChild(i);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let tg = document.createElement("b");
+                            tg.innerHTML = "Targeted group: ";
+                            let g = document.createElement("input");
+                            g.type = "text";
+                            g.id = "targetG"+(policies+1);
+                            g.placeholder = "Targeted Group Name";
+                            ndiv.appendChild(tg);
+                            ndiv.appendChild(g);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let gID = document.createElement("b");
+                            gID.innerHTML = "Group ID: ";
+                            let gI = document.createElement("input");
+                            gI.type = "text";
+                            gI.id = "gID"+(policies+1);
+                            gI.placeholder = "Group ID";
+                            ndiv.appendChild(gID);
+                            ndiv.appendChild(gI);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            let gTy = document.createElement("b");
+                            gTy.innerHTML = "Group Type: ";
+                            let gT = document.createElement("input");
+                            gT.type = "text";
+                            gT.id = "gType"+(policies+1);
+                            gT.placeholder = "Group Type";
+                            ndiv.appendChild(gTy);
+                            ndiv.appendChild(gT);
+                            ndiv.appendChild(document.createElement("br"));
+
+                            policies++;
+                            plInfo.appendChild(ndiv);
+                        }
+                    }
+                
+                    function RemoveUserInfo(bypass = false){
+                        if(bypass){
+                            document.getElementById("user"+(users)).remove();
+                            users--;
+                        }
+                        else{
+                            if(users > 1){
+                                document.getElementById("user"+(users)).remove();
+                                users--;
+                            }
+                        }
+                    }
+
+                    function RemoveDeviceInfo(bypass = false){
+                        if(bypass){
+                            document.getElementById("device"+devices).remove();
+                            devices--;
+                        }
+                        else{
+                            if(devices > 1){
+                                document.getElementById("device"+devices).remove();
+                                devices--;
+                            }
+                        }
+                    }
+
+                    function RemovePolicyInfo(bypass = false){
+                        if(bypass){
+                            document.getElementById("policy"+policies).remove();
+                            policies--;
+                        }
+                        else{
+                            if(policies > 1){
+                                document.getElementById("policy"+policies).remove();
+                                policies--;
+                            }
+                        }
+                    }
+                </script>
+            </fieldset>
+
+            <fieldset>
+                <legend><b>Troubleshooting</b></legend>
+            </fieldset>
+
+            <fieldset>
+                <legend><b>Reproduction Details</b></legend>
+                <b>Repro Steps:</b><br>
+                <textarea id="steps" style="height: 100px; width: 600px;"></textarea><br>
+                <b>Needed configurations and steps to attempt to repro:</b><br>
+                <textarea id="configs" style="height: 100px; width: 600px;"></textarea><br>
+                <b>Are you able to reproduce the issue in a test tenant using the above configurations/steps?</b>
+                <input type="checkbox" id="ableToRepro"><br>
+                <b>How your repro results were different:</b><br>
+                <textarea id="reproDiff" style="height: 100px; width: 600px;"></textarea><br>
+                <b>Why you could not attempt repro:</b><br>
+                <textarea id="notAttempt" style="height: 100px; width: 600px;"></textarea><br>
+            </fieldset>
+            <fieldset>
+                <legend><b>Additional data/logs:</b></legend>
+                <textarea id="addInfo" style="height: 100px; width: 600px;"></textarea>
+            </fieldset>
+            <button onclick="GenerateIET()">Generate</button>
+            <script>
+                
+                let us = "";
+                let dev = "";
+                let pol = "";
+                
+                function GenerateIET(){
+
+                    //#region 
+                    const ietTitle = document.getElementById("ietTitle").value;
+                    const compName = document.getElementById("compName").value;
+                    const ietDesc = document.getElementById("ietDesc").value;
+                    const TA = document.getElementById("TA").value;
+                    const TL = document.getElementById("TL").value;
+                    const request = document.querySelector('input[name="aRequested"]:checked').value;
+                    const requestDesc = document.getElementById("assistance").value;
+                    const date = document.getElementById("iDate").value;
+                    const dom = document.getElementById("dDomain").value;
+                    const compID = document.getElementById("tID").value;
+                    const mdm = document.getElementById("MDM").value;
+                    const asu = document.getElementById("ASU").value;
+                    const ism = document.getElementById("iSum").value;
+                    const imp = document.getElementById("imp").value;
+                    const usrCount = document.getElementById("usrCount").value;
+                    const poc = document.getElementById("POC").checked;
+                    const avoidWrk = document.getElementById("avoidWork").checked;
+                    const avoidARG = document.getElementById("avoidARG").value;
+                    const cusDelay = document.getElementById("cusDelay").checked;
+                    const deadline = document.getElementById("deadline").value;
+                    const addImpc = document.getElementById("addImpc").value;
+                    const expBh = document.getElementById("eBh").value;
+                    const obsBh = document.getElementById("oBh").value;
+                    const artBh = document.getElementById("artBH").value;
+                    const steps = document.getElementById("steps").value;
+                    const configs = document.getElementById("configs").value;
+                    const ableRepro = document.getElementById("ableToRepro").checked;
+                    const reproDiff = document.getElementById("reproDiff").value;
+                    const notAttempt = document.getElementById("notAttempt").value;
+                    //#endregion
+
+                    if(users >= 1){
+                        us = "";
+                        for(let i=0;i<users;i++){
+                            us += "<b>UPN:</b> "+document.getElementById("upn"+(i+1)).value +"\n"+
+                            "<b>UserID:</b> "+ document.getElementById("userID"+(i+1)).value +"\n"+
+                            "<b>Intune Licensed:</b> "+ (document.getElementById("intuneLic"+(i+1)).checked ? "Yes" : "No")+"\n\n";
+                        }
+                        us += "<b>===============</b>\n\n";
+                        //console.log(usrsInfo);
+                    }
+
+                    if(devices >= 1){
+                        dev = "";
+                        for(let i=0;i<devices;i++){
+                            dev += "<b>Intune Device ID:</b> "+document.getElementById("devID"+(i+1)).value+"\n"+
+                            "<b>AAD Device ID:</b> "+document.getElementById("aadDevID"+(i+1)).value+"\n"+
+                            "<b>AAD Object ID:</b> "+document.getElementById("aadObjID"+(i+1)).value+"\n"+
+                            "<b>Device Name:</b> "+document.getElementById("devName"+(i+1)).value+"\n"+
+                            "<b>Serial Number:</b> "+document.getElementById("serNum"+(i+1)).value+"\n"+
+                            "<b>Platform:</b> "+document.getElementById("devOS"+(i+1)).value+"\n"+
+                            "<b>Model and OS Version Number</b> "+document.getElementById("devModel"+(i+1)).value+" / " +document.getElementById("OSver"+(i+1)).value + 
+                            (document.getElementById("devModel"+(i+1)).value === "Windows" ? " / "+document.getElementById("devSKU"+(i+1)).value+"\n" : "\n")+
+                            "<b>Enrollment Method:</b> "+document.getElementById("enrMethod"+(i+1)).value+"\n"+
+                            "<b>Additional Information:</b> "+document.getElementById("addInfo"+(i+1)).value+"\n"+
+                            "<b>CP log incident ID:</b> "+document.getElementById("CP"+(i+1)).value+"\n\n";
+                        }
+                        dev += "<b>===============</b>\n\n";
+                        //console.log(devInfo);
+                    }
+
+                    if(policies >= 1){
+                        pol = "";
+                        for(let i=0;i<policies;i++){
+                            pol += "<b>Policy Type:</b>"+document.getElementById("polType"+(i+1)).value+"\n"+
+                            "<b>Policy Name:</b> "+document.getElementById("polName"+(i+1)).value+"\n"+
+                            "<b>Policy ID:</b> "+document.getElementById("polID"+(i+1)).value+"\n"+
+                            "<b>Targeted Group/ID/Type:</b> "+document.getElementById("targetG"+(i+1)).value +" / "+document.getElementById("gID"+(i+1)).value +" / "+document.getElementById("gType"+(i+1)).value + "\n\n";
+                        }
+                        pol += "<b>===============</b>\n\n";
+                        //console.log(polInfo);
+                    }
+                
+                
+                    iet = "IET TEMPLATE | ASSISTANCE REQUEST | "+ ietTitle +"\n\n"+
+                    "<b>Title:</b> "+compName+" - "+ietDesc+"\n"+
+                    "<b>Case#:</b> "+document.getElementById("caseNumF").value + "\n"+
+                    "<b>TA|TL Engaged:</b> "+ TA +(TL != "" ? "" : (" | "+TL))+"\n"+
+                    "<b>Assistance Required:</b> "+request+", "+requestDesc+"\n"+
+                    "<b>Date Issue Started:</b> "+date+"\n"+
+                    "<b>Default Domain Name:</b> "+dom+"\n"+
+                    "<b>Company ID:</b> "+compID+"\n"+
+                    "<b>MDM Authority:</b> "+mdm+"\n"+
+                    "<b>ASU:</b> "+asu+"\n"+
+                    "<b>===============</b>\n\n"+
+                    "<b>Issue Summary:</b>\n"+ism+"\n\n"+
+                    "<b>Impact:</b>\n"+imp+"\n\n"+
+                    "<b>Approx. affected user count:</b> "+usrCount+"\n"+
+                    "<b>Is this a POC (proof of concept):</b> "+(poc ? "Yes":"No")+"\n"+
+                    "<b>Ist this blocking users from working:</b> "+(avoidWrk ? "Yes" : "No")+(avoidWrk ? ", "+avoidARG : "")+"\n"+
+                    "<b>Will this issue cause daly on customer project(s) if not resolved quickly:</b> "+(cusDelay ? "Yes" : "No")+(cusDelay ? ", <b>needed fix deadline:</b> "+deadline : "")+"\n"+
+                    "<b>Anything else that should be known on Impact:</b>"+(addImpc != "" ? "\n"+addImpc : " N/A") + "\n\n"+
+                    "<b>Expected Behavior:</b> "+expBh+"\n"+
+                    "<b>Article Reference for Expected Behavior:</b> "+artBh+"\n"+
+                    "<b>Observed Behavior:</b> "+obsBh+"\n"+
+                    "<b>===============</b>\n\n"+
+                    us+dev+pol;
+
+                
+                    document.getElementById("ietRes").innerHTML = iet.replace(/\n/g,"<br>");
+                }
+
+            </script>
+            <fieldset>
+                <legend><b>IET</b></legend>
+                <div id="ietRes"></div>
+            </fieldset>
+        </div>
+
+        <script>
+
+            const subButtons = document.querySelectorAll('.subtab-btn');
+            const subContents = document.querySelectorAll('.subtab-content');
+            const buttons = document.querySelectorAll('.tab-btn');
+            const contents = document.querySelectorAll('.tab-content');
+
+            subButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Quitar clase activa de todos
+                    subButtons.forEach(btn => btn.classList.remove('active'));
+                    subContents.forEach(content => content.classList.remove('active'));
+
+                    // Activar el seleccionado
+                    button.classList.add('active');
+                    document.getElementById(button.dataset.tab).classList.add('active');
+                });
+            });
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Quitar clase activa de todos
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    contents.forEach(content => content.classList.remove('active'));
+
+                    // Activar el seleccionado
+                    button.classList.add('active');
+                    document.getElementById(button.dataset.tab).classList.add('active');
+                });
+            });
+        </script>
+    </body>
+</html>
