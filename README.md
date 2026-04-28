@@ -174,7 +174,10 @@
         </script>
     </head>    
     <body>
-        <h1>Intune QA Templates</h1>        
+        <fieldset style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <h1>Intune QA Templates</h1>
+            <button onclick="window.open('https://forms.office.com/r/jXWnsVvRQQ','_blank','noopener,noreferrer')">Send Feedback</button>
+        </fieldset>    
         <fieldset style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <legend><b>Time Zones</b></legend>
             <fieldset>
