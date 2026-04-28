@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
     <head>
         <meta charset="UTF-8">
@@ -190,7 +191,7 @@
                 <div class="reloj" id="mst"></div> 
             </fieldset>
         </fieldset>
-        <fieldset style="display: block;">
+        <fieldset style="display: none;">
             <legend><b>Engineer Alias</b></legend>
             <div>
                 <legend>Alias: <input id="eAlias" placeholder="Here goes your Alias" onchange="SetDate()"></legend>
@@ -353,14 +354,14 @@
         </fieldset>
 
         <div class="tab-buttons">
-            <button class="tab-btn" data-tab="tab1" style="display: block;">Master Note</button>
+            <button class="tab-btn" data-tab="tab1" style="display: none;">Master Note</button>
             <button class="tab-btn active" id="tab2BNT" data-tab="tab2">SLA</button>
             <button class="tab-btn" data-tab="tab3">Premier SLA</button>
             <button class="tab-btn" id="tab4BNT" data-tab="tab4">Follow Up</button>
             <button class="tab-btn" data-tab="tab5">Closure</button>
             <button class="tab-btn" data-tab="tab6">SAW Request</button>
             <button class="tab-btn" data-tab="tab7">22 Days Note</button>
-            <button class="tab-btn" data-tab="tab8">IET</button>
+            <button class="tab-btn" disabled="true" data-tab="tab8">IET (WIP)</button>
         </div>
 
         <!--Master Note-->
