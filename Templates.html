@@ -792,7 +792,7 @@
                 <button class="subtab-btn" id="fAbutton" data-tab="fA" style="display: none;">SEV A</button>
                 <button class="subtab-btn" id="fButton" data-tab="f1" style="display: block;">Strike</button>
                 <button class="subtab-btn active" id="ospButton" data-tab="osp">OSP</button>
-                <button class="subtab-btn" id="fHD" style="display: none; "data-tab="f2">Holydays</button>
+                <button class="subtab-btn" id="fHD" style="display: none;" data-tab="f2">Holydays</button>
             </div>
 
             <script>
