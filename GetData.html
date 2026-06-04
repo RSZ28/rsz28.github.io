@@ -1,0 +1,38 @@
+<script>
+    async function loadTemplates() {
+
+        const response =
+            await fetch(
+                "http://localhost:3000/templates/list"
+                //"https://templatesapi-awgkb6azg4a8dcdm.centralus-01.azurewebsites.net/list"
+            );
+
+        const data = await response.json();
+
+        const container =
+            document.getElementById("Content");
+
+        container.innerHTML = "";
+
+        data.forEach(item => {
+
+            const div =
+                document.createElement("div");
+
+            div.innerHTML = `
+                <h2>${item.title}</h2>
+                <div>${item.content}</div>
+                <div>${item.DispName}</div>
+                <hr>
+            `;
+
+            container.appendChild(div);
+        });
+    }
+</script>
+
+<fieldset>
+    <legend>Si</legend>
+    <button onclick="loadTemplates()">Get</button>
+    <div id="Content"></div>
+</fieldset>
