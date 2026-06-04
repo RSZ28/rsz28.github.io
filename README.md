@@ -106,7 +106,6 @@
 
         </style>
         <title>Intune Templates</title>        
-        <link rel="stylesheet" href="style.css">
         <script>
             let createdHD = [];
             var templatesContent = {};
