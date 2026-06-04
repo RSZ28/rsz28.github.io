@@ -190,7 +190,6 @@
                     }
 
                     if(HDs.length > 0){
-                        document.getElementById("fHD").style.display = "block";
                         HDs.forEach(f =>{
                             if(createdHD.length !== 0){
                                 if(!createdHD.find(i => i === f.title)){
@@ -227,11 +226,15 @@
                             
                         });
                     }
-                    else document.getElementById("fHD").style.display = "none";
 
                 } catch(error){
                     console.error('Error: ',error);
                 }
+            }
+
+            function checkAvailableHD(){
+                if(document.getElementById("HDContainer").childElementCount > 0) document.getElementById("fHD").style.display = "block";
+                else document.getElementById("fHD").style.display = "none";
             }
 
             document.addEventListener("DOMContentLoaded", function() {
@@ -262,7 +265,8 @@
                     document.getElementById(id).textContent = `${nombre}: ${ahora}`;
                 });                
             }
-            setInterval(getHolyDays,3000);
+            setInterval(getHolyDays, 3000);
+            setInterval(getHolyDays, 3000);
             ShowIM();
             Look4Cases();
             setInterval(actualizarRelojes, 1000);
