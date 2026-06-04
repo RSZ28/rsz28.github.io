@@ -997,7 +997,7 @@
                     template = await GetTemplates(hd);
 
                     if(template.includes("NAME")) template = template.replace("NAME",cName);
-                    //if(template.includes("CALL")) template = template.replace("CALL","<b>" + callTime +" UTC-6</b>");
+                    if(template.includes("TIME")) template = template.replace("TIME","<b>" + callTime +" UTC-6</b>");
                     //if(template.includes("PH")) template = template = template.replace("PH","<b>" + cPhone +"</b>");
                     if(template.includes("TICKET")) template = template.replace("TICKET","<b>" + cNumber + "</b>");
                     //if(template.includes("DESC")) template = template.replace("DESC", "<b>" + cDes + "</b>");
