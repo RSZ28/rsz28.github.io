@@ -182,10 +182,10 @@
                             createdHD.splice(i);
                         });
                         if(createdHD.length === 0){
-                            document.getElementById("ospButton").classList.add('active');
-                            document.getElementById("fHD").classList.remove('active');
-                            document.getElementById("f2").classList.remove('active');
-                            document.getElementById("osp").classList.add('active');
+                            //document.getElementById("ospButton").classList.add('active');
+                            //document.getElementById("fHD").classList.remove('active');
+                            //document.getElementById("f2").classList.remove('active');
+                            //document.getElementById("osp").classList.add('active');
                         }
                     }
 
@@ -266,7 +266,7 @@
                 });                
             }
             setInterval(getHolyDays, 3000);
-            setInterval(getHolyDays, 3000);
+            setInterval(checkAvailableHD, 3000);
             ShowIM();
             Look4Cases();
             setInterval(actualizarRelojes, 1000);
