@@ -190,6 +190,7 @@
                     }
 
                     if(HDs.length > 0){
+                        document.getElementById("fHD").style.display = "block";
                         HDs.forEach(f =>{
                             if(createdHD.length !== 0){
                                 if(!createdHD.find(i => i === f.title)){
@@ -225,8 +226,6 @@
                             }
                             
                         });
-                        
-                        document.getElementById("fHD").style.display = "block";
                     }
                     else document.getElementById("fHD").style.display = "none";
 
